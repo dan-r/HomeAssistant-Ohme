@@ -59,7 +59,11 @@ class ConnectedSensor(
 
     @property
     def is_on(self) -> bool:
-        self._state = bool(self.coordinator.data["mode"] != "DISCONNECTED")
+        if self.coordinator.data is None:
+          self._state = False
+        else:
+          self._state = bool(self.coordinator.data["mode"] != "DISCONNECTED")
+
         return self._state
 
 class ChargingSensor(

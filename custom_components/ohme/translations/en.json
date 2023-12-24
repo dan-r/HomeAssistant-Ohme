@@ -1,0 +1,38 @@
+{
+  "title": "Ohme",
+  "config": {
+    "step": {
+      "user": {
+        "description": "Configure your Ohme account.",
+        "data": {
+          "email": "Email address",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "auth_error": "Invalid credentials provided."
+    },
+    "abort": {
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Update Account Info",
+        "description": "Update your basic account information.",
+        "data": {
+          "email": "Email address",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "auth_error": "Invalid credentials provided."
+    },
+    "abort": {
+    }
+  },
+  "issues": {
+  }
+}

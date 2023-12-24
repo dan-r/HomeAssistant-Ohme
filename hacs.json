@@ -1,0 +1,5 @@
+{
+  "name": "Ohme EV Charger",
+  "render_readme": true,
+  "iot_class": "cloud_polling"
+}

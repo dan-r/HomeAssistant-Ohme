@@ -33,6 +33,8 @@ class OhmeApiClient:
         return True
 
   async def async_get_charge_sessions(self, is_retry=False):
+    """Try to fetch charge sessions endpoint.
+       If we get a non 200 response, refresh auth token and try again"""
     async with aiohttp.ClientSession() as session:
       async with session.get(
             'https://api.ohme.io/v1/chargeSessions',
@@ -40,8 +42,8 @@ class OhmeApiClient:
             ) as resp:
 
         if resp.status != 200 and not is_retry:
-          await self.async_refresh_session(self)
-          return self.async_get_charge_sessions(self, True)
+          await self.async_refresh_session()
+          return self.async_get_charge_sessions(True)
         elif resp.status != 200:
           return False
 
@@ -56,8 +58,8 @@ class OhmeApiClient:
             ) as resp:
 
         if resp.status != 200 and not is_retry:
-          await self.async_refresh_session(self)
-          return self.async_get_device_info(self, True)
+          await self.async_refresh_session()
+          return self.async_get_device_info(True)
         elif resp.status != 200:
           return False
 

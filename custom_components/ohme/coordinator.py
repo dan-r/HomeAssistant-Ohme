@@ -20,7 +20,7 @@ class OhmeUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Charger",
-            update_interval=timedelta(seconds=60),
+            update_interval=timedelta(seconds=30),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 

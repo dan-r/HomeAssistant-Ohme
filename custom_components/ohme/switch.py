@@ -21,11 +21,12 @@ async def async_setup_entry(
     config_entry: config_entries.ConfigEntry,
     async_add_entities
 ):
-    """Setup buttons and configure coordinator."""
+    """Setup switches and configure coordinator."""
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
     client = hass.data[DOMAIN][DATA_CLIENT]
 
-    buttons = [OhmePauseCharge(coordinator, hass, client)]
+    buttons = [OhmePauseCharge(coordinator, hass, client),
+               OhmeMaxCharge(coordinator, hass, client)]
 
     async_add_entities(buttons, update_before_add=True)
 
@@ -55,7 +56,7 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
 
     @property
     def icon(self):
-        """Icon of the button."""
+        """Icon of the switch."""
         return "mdi:pause"
 
     @callback
@@ -78,10 +79,68 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
         self._last_updated = utcnow()
         self.async_write_ha_state()
 
+        await self.coordinator.async_refresh()
+
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_resume_charge()
         
+        self._attr_is_on = False
+        self._last_updated = utcnow()
+        self.async_write_ha_state()
+
+        await self.coordinator.async_refresh()
+
+class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
+    """Switch for pausing a charge."""
+    _attr_name = "Ohme Max Charge"
+
+    def __init__(self, coordinator, hass: HomeAssistant, client):
+        super().__init__(coordinator=coordinator)
+
+        self._client = client
+
+        self._state = False
+        self._last_updated = None
+        self._attributes = {}
+
+        self.entity_id = generate_entity_id(
+            "switch.{}", "ohme_max_charge", hass=hass)
+
+        self._attr_device_info = client.get_device_info()
+
+    @property
+    def unique_id(self):
+        """The unique ID of the switch."""
+        return self.entity_id
+
+    @property
+    def icon(self):
+        """Icon of the switch."""
+        return "mdi:battery-arrow-up"
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Determine if we are max charging."""
+        if self.coordinator.data is None:
+            self._attr_is_on = False
+        else:
+            self._attr_is_on = bool(self.coordinator.data["mode"] == "MAX_CHARGE")
+
+        self.async_write_ha_state()
+
+    async def async_turn_on(self):
+        """Turn on the switch."""
+        await self._client.async_max_charge()
+
+        self._attr_is_on = True
+        self._last_updated = utcnow()
+        self.async_write_ha_state()
+
+    async def async_turn_off(self):
+        """Turn off the switch."""
+        await self._client.async_stop_max_charge()
+
         self._attr_is_on = False
         self._last_updated = utcnow()
         self.async_write_ha_state()

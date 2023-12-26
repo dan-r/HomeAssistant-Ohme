@@ -13,8 +13,7 @@
     "error": {
       "auth_error": "Invalid credentials provided."
     },
-    "abort": {
-    }
+    "abort": {}
   },
   "options": {
     "step": {
@@ -30,9 +29,7 @@
     "error": {
       "auth_error": "Invalid credentials provided."
     },
-    "abort": {
-    }
+    "abort": {}
   },
-  "issues": {
-  }
+  "issues": {}
 }

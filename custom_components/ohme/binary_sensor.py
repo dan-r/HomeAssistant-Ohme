@@ -17,9 +17,11 @@ async def async_setup_entry(
     config_entry: config_entries.ConfigEntry,
     async_add_entities,
 ):
+    """Setup sensors and configure coordinator."""
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
 
-    sensors = [ConnectedSensor(coordinator, hass), ChargingSensor(coordinator, hass)]
+    sensors = [ConnectedSensor(coordinator, hass),
+               ChargingSensor(coordinator, hass)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -27,7 +29,7 @@ async def async_setup_entry(
 class ConnectedSensor(
         CoordinatorEntity[OhmeUpdateCoordinator],
         BinarySensorEntity):
-    """Representation of a Sensor."""
+    """Binary sensor for if car is plugged in."""
 
     _attr_name = "Ohme Car Connected"
     _attr_device_class = BinarySensorDeviceClass.PLUG
@@ -45,7 +47,8 @@ class ConnectedSensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_connected", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def icon(self):
@@ -60,16 +63,17 @@ class ConnectedSensor(
     @property
     def is_on(self) -> bool:
         if self.coordinator.data is None:
-          self._state = False
+            self._state = False
         else:
-          self._state = bool(self.coordinator.data["mode"] != "DISCONNECTED")
+            self._state = bool(self.coordinator.data["mode"] != "DISCONNECTED")
 
         return self._state
+
 
 class ChargingSensor(
         CoordinatorEntity[OhmeUpdateCoordinator],
         BinarySensorEntity):
-    """Representation of a Sensor."""
+    """Binary sensor for if car is charging."""
 
     _attr_name = "Ohme Car Charging"
     _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
@@ -87,7 +91,8 @@ class ChargingSensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_charging", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def icon(self):

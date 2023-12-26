@@ -6,11 +6,11 @@ from .coordinator import OhmeUpdateCoordinator
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the Ohme EV Charger component."""
-    # @TODO: Add setup code.
     return True
 
 
 async def async_setup_dependencies(hass, config):
+    """Instantiate client and refresh session"""
     client = OhmeApiClient(config['email'], config['password'])
     hass.data[DOMAIN][DATA_CLIENT] = client
 

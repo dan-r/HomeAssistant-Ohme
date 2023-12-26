@@ -18,14 +18,16 @@ async def async_setup_entry(
     config_entry: config_entries.ConfigEntry,
     async_add_entities
 ):
+    """Setup sensors and configure coordinator."""
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
 
-    sensors = [ExampleSensor(coordinator, hass)]
+    sensors = [PowerDrawSensor(coordinator, hass)]
 
     async_add_entities(sensors, update_before_add=True)
 
 
-class ExampleSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
+class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
+    """Sensor for car power draw."""
     _attr_name = "Ohme Power Draw"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
@@ -43,7 +45,8 @@ class ExampleSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_power_draw", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def unique_id(self) -> str:
@@ -55,9 +58,9 @@ class ExampleSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
         """Icon of the sensor."""
         return "mdi:ev-station"
 
-
     @property
     def native_value(self):
+        """Get value from data returned from API by coordinator"""
         if self.coordinator.data and self.coordinator.data['power']:
             return self.coordinator.data['power']['watt']
         return 0

@@ -20,6 +20,7 @@ class OhmeApiClient:
 
         self._device_info = None
         self._token = None
+        self._serial = ""
         self._session = aiohttp.ClientSession()
 
     async def async_refresh_session(self):
@@ -36,6 +37,36 @@ class OhmeApiClient:
             resp_json = await resp.json()
             self._token = resp_json['idToken']
             return True
+
+    async def _post_request(self, url, skip_json=False, data=None, is_retry=False):
+        """Try to make a post request
+           If we get a non 200 response, refresh auth token and try again"""
+        async with self._session.post(
+            url,
+            data=data,
+            headers={"Authorization": "Firebase %s" % self._token}
+        ) as resp:
+            if resp.status != 200 and not is_retry:
+                await self.async_refresh_session()
+                return await self._post_request(url, skip_json=skip_json, data=data, is_retry=True)
+            elif resp.status != 200:
+                return False
+
+            if skip_json:
+                return await resp.text()
+
+            resp_json = await resp.json()
+            return resp_json
+
+    async def async_pause_charge(self):
+        """Pause an ongoing charge"""
+        result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/stop", skip_json=True)
+        return bool(result)
+
+    async def async_resume_charge(self):
+        """Resume a paused charge"""
+        result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/resume", skip_json=True)
+        return bool(result)
 
     async def async_get_charge_sessions(self, is_retry=False):
         """Try to fetch charge sessions endpoint.
@@ -78,7 +109,7 @@ class OhmeApiClient:
                 sw_version=device['firmwareVersionLabel'],
                 serial_number=device['id']
             )
-
+            self._serial = device['id']
             self._device_info = info
 
     def get_device_info(self):

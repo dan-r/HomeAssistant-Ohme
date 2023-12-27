@@ -32,7 +32,7 @@ class ConnectedSensor(
         BinarySensorEntity):
     """Binary sensor for if car is plugged in."""
 
-    _attr_name = "Ohme Car Connected"
+    _attr_name = "Car Connected"
     _attr_device_class = BinarySensorDeviceClass.PLUG
 
     def __init__(
@@ -78,7 +78,7 @@ class ChargingSensor(
         BinarySensorEntity):
     """Binary sensor for if car is charging."""
 
-    _attr_name = "Ohme Car Charging"
+    _attr_name = "Car Charging"
     _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
 
     def __init__(

@@ -32,7 +32,7 @@ async def async_setup_entry(
 
 class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
     """Sensor for car power draw."""
-    _attr_name = "Ohme Power Draw"
+    _attr_name = "Current Power Draw"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
 
@@ -74,7 +74,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
 
 class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
     """Sensor for total energy usage."""
-    _attr_name = "Ohme Accumulative Energy Usage"
+    _attr_name = "Accumulative Energy Usage"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
 
@@ -116,7 +116,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
 
 class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
     """Sensor for next smart charge slot."""
-    _attr_name = "Ohme Next Smart Charge Slot"
+    _attr_name = "Next Smart Charge Slot"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
     def __init__(

@@ -84,9 +84,10 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_resume_charge()
-        
+
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()
+
 
 class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
     """Switch for pausing a charge."""
@@ -122,7 +123,8 @@ class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
         if self.coordinator.data is None:
             self._attr_is_on = False
         else:
-            self._attr_is_on = bool(self.coordinator.data["mode"] == "MAX_CHARGE")
+            self._attr_is_on = bool(
+                self.coordinator.data["mode"] == "MAX_CHARGE")
 
         self._last_updated = utcnow()
 

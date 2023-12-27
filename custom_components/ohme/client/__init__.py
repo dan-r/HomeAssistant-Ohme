@@ -100,12 +100,12 @@ class OhmeApiClient:
         """Resume a paused charge"""
         result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/resume", skip_json=True)
         return bool(result)
-    
+
     async def async_max_charge(self):
         """Enable max charge"""
         result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
         return bool(result)
-    
+
     async def async_stop_max_charge(self):
         """Stop max charge.
            This is more complicated than starting one as we need to give more parameters."""
@@ -116,7 +116,7 @@ class OhmeApiClient:
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
         resp = await self._get_request('https://api.ohme.io/v1/chargeSessions')
-        
+
         if not resp:
             return False
 
@@ -139,7 +139,7 @@ class OhmeApiClient:
             sw_version=device['firmwareVersionLabel'],
             serial_number=device['id']
         )
-            
+
         self._user_id = resp['user']['id']
         self._serial = device['id']
         self._device_info = info
@@ -150,7 +150,8 @@ class OhmeApiClient:
         """Get the last second of this month."""
         dt = datetime.today()
         dt = dt.replace(day=1) + timedelta(days=32)
-        dt = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
+        dt = dt.replace(day=1, hour=0, minute=0, second=0,
+                        microsecond=0) - timedelta(seconds=1)
         return int(dt.timestamp()*1e3)
 
     async def async_get_charge_statistics(self):
@@ -168,4 +169,3 @@ class OhmeApiClient:
 
     def get_unique_id(self, name):
         return f"ohme_{self._serial}_{name}"
-

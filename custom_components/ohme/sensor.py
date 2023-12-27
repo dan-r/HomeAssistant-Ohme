@@ -23,7 +23,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
     stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
 
-    sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(stats_coordinator, hass, client)]
+    sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(
+        stats_coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -49,7 +50,8 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_power_draw", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def unique_id(self) -> str:
@@ -90,7 +92,8 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_accumulative_energy", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def unique_id(self) -> str:

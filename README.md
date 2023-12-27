@@ -17,6 +17,7 @@ This integration exposes the following entities:
 * Sensors
     * Power Draw (Watts) - Power draw of connected car
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
+    * Next Smart Charge Slot - The next time your car will start charging according to the Ohme-generated charge plan
 * Switches - These are only functional when a car is connected
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge

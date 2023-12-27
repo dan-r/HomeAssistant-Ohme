@@ -157,7 +157,7 @@ class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorE
     @callback
     def _handle_coordinator_update(self) -> None:
         """Calculate next timeslot. This is a bit slow so we only update on coordinator data update."""
-        if self.coordinator.data is None:
+        if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
             self._state = charge_graph_next_slot(

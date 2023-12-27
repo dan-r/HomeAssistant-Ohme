@@ -19,10 +19,11 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup sensors and configure coordinator."""
+    client = hass.data[DOMAIN][DATA_CLIENT]
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
     stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
 
-    sensors = [PowerDrawSensor(coordinator, hass), EnergyUsageSensor(stats_coordinator, hass)]
+    sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(stats_coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -36,12 +37,14 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
     def __init__(
             self,
             coordinator: OhmeUpdateCoordinator,
-            hass: HomeAssistant):
+            hass: HomeAssistant,
+            client):
         super().__init__(coordinator=coordinator)
 
         self._state = None
         self._attributes = {}
         self._last_updated = None
+        self._client = client
 
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_power_draw", hass=hass)
@@ -51,7 +54,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self.entity_id
+        return self._client.get_unique_id("power_draw")
 
     @property
     def icon(self):
@@ -76,12 +79,14 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
     def __init__(
             self,
             coordinator: OhmeUpdateCoordinator,
-            hass: HomeAssistant):
+            hass: HomeAssistant,
+            client):
         super().__init__(coordinator=coordinator)
 
         self._state = None
         self._attributes = {}
         self._last_updated = None
+        self._client = client
 
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_accumulative_energy", hass=hass)
@@ -91,7 +96,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self.entity_id
+        return self._client.get_unique_id("accumulative_energy")
 
     @property
     def icon(self):

@@ -165,3 +165,7 @@ class OhmeApiClient:
 
     def get_device_info(self):
         return self._device_info
+
+    def get_unique_id(self, name):
+        return f"ohme_{self._serial}_{name}"
+

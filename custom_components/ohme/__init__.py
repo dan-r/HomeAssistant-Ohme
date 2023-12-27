@@ -31,6 +31,12 @@ async def async_setup_entry(hass, entry):
 
     await async_setup_dependencies(hass, config)
     
+    hass.data[DOMAIN][DATA_COORDINATOR] = OhmeUpdateCoordinator(hass=hass)
+    await hass.data[DOMAIN][DATA_COORDINATOR].async_config_entry_first_refresh()
+
+    hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsUpdateCoordinator(hass=hass)
+    await hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR].async_config_entry_first_refresh()
+
     # Create tasks for each entity type
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
@@ -42,10 +48,9 @@ async def async_setup_entry(hass, entry):
         hass.config_entries.async_forward_entry_setup(entry, "switch")
     )
 
-    hass.data[DOMAIN][DATA_COORDINATOR] = OhmeUpdateCoordinator(hass=hass)
-    await hass.data[DOMAIN][DATA_COORDINATOR].async_config_entry_first_refresh()
-
-    hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsUpdateCoordinator(hass=hass)
-    await hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR].async_config_entry_first_refresh()
-
     return True
+
+async def async_unload_entry(hass, entry):
+    """Unload a config entry."""
+
+    return await hass.config_entries.async_unload_platforms(entry, ['binary_sensor', 'sensor', 'switch'])

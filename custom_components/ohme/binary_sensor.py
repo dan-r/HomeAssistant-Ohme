@@ -18,10 +18,11 @@ async def async_setup_entry(
     async_add_entities,
 ):
     """Setup sensors and configure coordinator."""
+    client = hass.data[DOMAIN][DATA_CLIENT]
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
 
-    sensors = [ConnectedSensor(coordinator, hass),
-               ChargingSensor(coordinator, hass)]
+    sensors = [ConnectedSensor(coordinator, hass, client),
+               ChargingSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -37,12 +38,14 @@ class ConnectedSensor(
     def __init__(
             self,
             coordinator: OhmeUpdateCoordinator,
-            hass: HomeAssistant):
+            hass: HomeAssistant,
+            client):
         super().__init__(coordinator=coordinator)
 
         self._attributes = {}
         self._last_updated = None
         self._state = False
+        self._client = client
 
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_connected", hass=hass)
@@ -58,7 +61,7 @@ class ConnectedSensor(
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self.entity_id
+        return self._client.get_unique_id("car_connected")
 
     @property
     def is_on(self) -> bool:
@@ -81,12 +84,14 @@ class ChargingSensor(
     def __init__(
             self,
             coordinator: OhmeUpdateCoordinator,
-            hass: HomeAssistant):
+            hass: HomeAssistant,
+            client):
         super().__init__(coordinator=coordinator)
 
         self._attributes = {}
         self._last_updated = None
         self._state = False
+        self._client = client
 
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_charging", hass=hass)
@@ -102,7 +107,7 @@ class ChargingSensor(
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self.entity_id
+        return self._client.get_unique_id("ohme_car_charging")
 
     @property
     def is_on(self) -> bool:

@@ -53,7 +53,7 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
     @property
     def unique_id(self):
         """The unique ID of the switch."""
-        return self.entity_id
+        return self._client.get_unique_id("pause_charge")
 
     @property
     def icon(self):
@@ -109,7 +109,7 @@ class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
     @property
     def unique_id(self):
         """The unique ID of the switch."""
-        return self.entity_id
+        return self._client.get_unique_id("max_charge")
 
     @property
     def icon(self):

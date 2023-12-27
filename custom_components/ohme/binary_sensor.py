@@ -107,7 +107,8 @@ class ChargingSensor(
     @property
     def is_on(self) -> bool:
         if self.coordinator.data and self.coordinator.data["power"]:
-            self._state = self.coordinator.data["power"]["amp"] > 0
+            # Assume the car is actively charging if drawing over 0 watts
+            self._state = self.coordinator.data["power"]["watt"] > 0
         else:
             self._state = False
 

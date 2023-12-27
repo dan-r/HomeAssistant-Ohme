@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+import asyncio
 
 from homeassistant.core import callback, HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
@@ -63,11 +64,13 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
     def _handle_coordinator_update(self) -> None:
         """Determine if charge is paused.
            We handle this differently to the sensors as the state of this switch
-           is changed 'optimistically' to stop the switch flicking back then forth."""
+           is evaluated only when new data is fetched to stop the switch flicking back then forth."""
         if self.coordinator.data is None:
             self._attr_is_on = False
         else:
             self._attr_is_on = bool(self.coordinator.data["mode"] == "STOPPED")
+
+        self._last_updated = utcnow()
 
         self.async_write_ha_state()
 
@@ -75,20 +78,14 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
         """Turn on the switch."""
         await self._client.async_pause_charge()
 
-        self._attr_is_on = True
-        self._last_updated = utcnow()
-        self.async_write_ha_state()
-
+        await asyncio.sleep(1)
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_resume_charge()
         
-        self._attr_is_on = False
-        self._last_updated = utcnow()
-        self.async_write_ha_state()
-
+        await asyncio.sleep(1)
         await self.coordinator.async_refresh()
 
 class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
@@ -127,20 +124,22 @@ class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
         else:
             self._attr_is_on = bool(self.coordinator.data["mode"] == "MAX_CHARGE")
 
+        self._last_updated = utcnow()
+
         self.async_write_ha_state()
 
     async def async_turn_on(self):
         """Turn on the switch."""
         await self._client.async_max_charge()
 
-        self._attr_is_on = True
-        self._last_updated = utcnow()
-        self.async_write_ha_state()
+        # Not very graceful but wait here to avoid the mode coming back as 'CALCULATING'
+        # It would be nice to simply ignore this state in future and try again after x seconds.
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
 
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_stop_max_charge()
 
-        self._attr_is_on = False
-        self._last_updated = utcnow()
-        self.async_write_ha_state()
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()

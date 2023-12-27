@@ -7,10 +7,12 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import UnitOfPower, UnitOfEnergy
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
+from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR, DATA_STATISTICS_COORDINATOR
 from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
+from .utils import charge_graph_next_slot
 
 
 async def async_setup_entry(
@@ -23,14 +25,15 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
     stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
 
-    sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(stats_coordinator, hass, client)]
+    sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(
+        stats_coordinator, hass, client), NextSlotSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
 
 class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
     """Sensor for car power draw."""
-    _attr_name = "Ohme Power Draw"
+    _attr_name = "Current Power Draw"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
 
@@ -49,7 +52,8 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_power_draw", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def unique_id(self) -> str:
@@ -71,7 +75,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
 
 class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
     """Sensor for total energy usage."""
-    _attr_name = "Ohme Accumulative Energy Usage"
+    _attr_name = "Accumulative Energy Usage"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
 
@@ -90,7 +94,8 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_accumulative_energy", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
 
     @property
     def unique_id(self) -> str:
@@ -109,3 +114,55 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
             return self.coordinator.data['energyChargedTotalWh'] / 1000
 
         return None
+
+
+class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
+    """Sensor for next smart charge slot."""
+    _attr_name = "Next Smart Charge Slot"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(
+            self,
+            coordinator: OhmeUpdateCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_next_slot", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("next_slot")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:clock-star-four-points-outline"
+
+    @property
+    def native_value(self):
+        """Return pre-calculated state."""
+        return self._state
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Calculate next timeslot. This is a bit slow so we only update on coordinator data update."""
+        if self.coordinator.data is None:
+            self._state = None
+        else:
+            self._state = charge_graph_next_slot(
+                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()

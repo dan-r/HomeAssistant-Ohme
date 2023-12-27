@@ -16,7 +16,7 @@ def charge_graph_next_slot(charge_start, points):
     
     # Give up if we have less than 3 points
     if len(data) < 3:
-        return False
+        return None
 
     next_ts = None
 

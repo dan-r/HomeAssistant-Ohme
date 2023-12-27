@@ -7,8 +7,9 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import UnitOfPower, UnitOfEnergy
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
+from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR, DATA_STATISTICS_COORDINATOR
 from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
 from .utils import charge_graph_next_slot
@@ -148,8 +149,17 @@ class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorE
 
     @property
     def native_value(self):
-        """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['mode'] != "DISCONNECTED":
-            return charge_graph_next_slot(self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+        """Return pre-calculated state."""
+        return self._state
 
-        return None
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Calculate next timeslot. This is a bit slow so we only update on coordinator data update."""
+        if self.coordinator.data is None:
+            self._state = None
+        else:
+            self._state = charge_graph_next_slot(self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()

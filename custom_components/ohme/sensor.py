@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR, DATA_STATISTICS_COORDINATOR
 from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
-
+from .utils import charge_graph_next_slot
 
 async def async_setup_entry(
     hass: core.HomeAssistant,
@@ -24,7 +24,7 @@ async def async_setup_entry(
     stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
 
     sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(
-        stats_coordinator, hass, client)]
+        stats_coordinator, hass, client), NextSlotSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -110,5 +110,46 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data and self.coordinator.data['energyChargedTotalWh']:
             return self.coordinator.data['energyChargedTotalWh'] / 1000
+
+        return None
+
+class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
+    """Sensor for next smart charge slot."""
+    _attr_name = "Ohme Next Smart Charge Slot"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(
+            self,
+            coordinator: OhmeUpdateCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_next_slot", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("next_slot")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:clock-star-four-points-outline"
+
+    @property
+    def native_value(self):
+        """Get value from data returned from API by coordinator"""
+        if self.coordinator.data and self.coordinator.data['mode'] != "DISCONNECTED":
+            return charge_graph_next_slot(self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
 
         return None

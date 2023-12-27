@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import logging
 import json
+from datetime import datetime, timedelta
 from homeassistant.helpers.entity import DeviceInfo
 from ..const import DOMAIN
 
@@ -20,6 +21,7 @@ class OhmeApiClient:
 
         self._device_info = None
         self._token = None
+        self._user_id = ""
         self._serial = ""
         self._session = aiohttp.ClientSession()
 
@@ -74,6 +76,21 @@ class OhmeApiClient:
 
             return True
 
+    async def _get_request(self, url, is_retry=False):
+        """Try to make a GET request
+           If we get a non 200 response, refresh auth token and try again"""
+        async with self._session.get(
+            url,
+            headers={"Authorization": "Firebase %s" % self._token}
+        ) as resp:
+            if resp.status != 200 and not is_retry:
+                await self.async_refresh_session()
+                return await self._get_request(url, is_retry=True)
+            elif resp.status != 200:
+                return False
+
+            return await resp.json()
+
     async def async_pause_charge(self):
         """Pause an ongoing charge"""
         result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/stop", skip_json=True)
@@ -98,46 +115,57 @@ class OhmeApiClient:
     async def async_get_charge_sessions(self, is_retry=False):
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
-        async with self._session.get(
-            'https://api.ohme.io/v1/chargeSessions',
-            headers={"Authorization": "Firebase %s" % self._token}
-        ) as resp:
+        resp = await self._get_request('https://api.ohme.io/v1/chargeSessions')
+        
+        if not resp:
+            return False
 
-            if resp.status != 200 and not is_retry:
-                await self.async_refresh_session()
-                return await self.async_get_charge_sessions(True)
-            elif resp.status != 200:
-                return False
-
-            resp_json = await resp.json()
-            return resp_json[0]
+        return resp[0]
 
     async def async_update_device_info(self, is_retry=False):
         """Update _device_info with our charger model."""
-        async with self._session.get(
-            'https://api.ohme.io/v1/users/me/account',
-            headers={"Authorization": "Firebase %s" % self._token}
-        ) as resp:
+        resp = await self._get_request('https://api.ohme.io/v1/users/me/account')
 
-            if resp.status != 200 and not is_retry:
-                await self.async_refresh_session()
-                return await self.async_get_device_info(True)
-            elif resp.status != 200:
-                return False
+        if not resp:
+            return False
 
-            resp_json = await resp.json()
-            device = resp_json['chargeDevices'][0]
+        device = resp['chargeDevices'][0]
 
-            info = DeviceInfo(
-                identifiers={(DOMAIN, "ohme_charger")},
-                name=device['modelTypeDisplayName'],
-                manufacturer="Ohme",
-                model=device['modelTypeDisplayName'].replace("Ohme ", ""),
-                sw_version=device['firmwareVersionLabel'],
-                serial_number=device['id']
-            )
-            self._serial = device['id']
-            self._device_info = info
+        info = DeviceInfo(
+            identifiers={(DOMAIN, "ohme_charger")},
+            name=device['modelTypeDisplayName'],
+            manufacturer="Ohme",
+            model=device['modelTypeDisplayName'].replace("Ohme ", ""),
+            sw_version=device['firmwareVersionLabel'],
+            serial_number=device['id']
+        )
+            
+        self._user_id = resp['user']['id']
+        self._serial = device['id']
+        self._device_info = info
+
+        return True
+
+    def _last_second_of_month_timestamp(self):
+        """Get the last second of this month."""
+        dt = datetime.today()
+        dt = dt.replace(day=1) + timedelta(days=32)
+        dt = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
+        return int(dt.timestamp()*1e3)
+
+    async def async_get_charge_statistics(self):
+        """Get charge statistics. Currently this is just for all time (well, Jan 2019)."""
+        end_ts = self._last_second_of_month_timestamp()
+        resp = await self._get_request(f"https://api.ohme.io/v1/chargeSessions/summary/users/{self._user_id}?&startTs=1546300800000&endTs={end_ts}&granularity=MONTH")
+
+        if not resp:
+            return False
+
+        return resp['totalStats']
 
     def get_device_info(self):
         return self._device_info
+
+    def get_unique_id(self, name):
+        return f"ohme_{self._serial}_{name}"
+

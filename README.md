@@ -8,6 +8,19 @@ This has only be tested with an Ohme Home Pro and does not currently support soc
 
 It's still very early in development but I plan to add more sensors and support for pausing/resuming charge.
 
+## Entities
+This integration exposes the following entities:
+
+* Binary Sensors
+    * Car Connected - On when a car is plugged in
+    * Car Charging - On when a car is connected and drawing power
+* Sensors
+    * Power Draw (Watts) - Power draw of connected car
+    * Accumulative Energy Usage (kWh) - Total energy used by the charger
+* Switches - These are only functional when a car is connected
+    * Max Charge - Forces the connected car to charge regardless of set schedule
+    * Pause Charge - Pauses an ongoing charge
+
 ## Installation
 
 ### HACS

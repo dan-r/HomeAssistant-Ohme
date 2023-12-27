@@ -1,7 +1,7 @@
 from homeassistant import core
 from .const import *
 from .client import OhmeApiClient
-from .coordinator import OhmeUpdateCoordinator
+from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
@@ -30,7 +30,8 @@ async def async_setup_entry(hass, entry):
         return False
 
     await async_setup_dependencies(hass, config)
-
+    
+    # Create tasks for each entity type
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
@@ -43,5 +44,8 @@ async def async_setup_entry(hass, entry):
 
     hass.data[DOMAIN][DATA_COORDINATOR] = OhmeUpdateCoordinator(hass=hass)
     await hass.data[DOMAIN][DATA_COORDINATOR].async_config_entry_first_refresh()
+
+    hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsUpdateCoordinator(hass=hass)
+    await hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR].async_config_entry_first_refresh()
 
     return True

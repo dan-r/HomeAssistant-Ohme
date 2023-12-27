@@ -1,7 +1,7 @@
 import voluptuous as vol
 from homeassistant.config_entries import (ConfigFlow, OptionsFlow)
 from .const import DOMAIN
-from .client import OhmeApiClient
+from .api_client import OhmeApiClient
 
 
 class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):

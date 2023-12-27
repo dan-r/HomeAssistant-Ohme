@@ -2,18 +2,19 @@ from time import time
 from datetime import datetime
 import pytz
 
+
 def charge_graph_next_slot(charge_start, points):
     """Get the next charge slot from a list of graph points."""
     # Get start and current timestamp in seconds
     charge_start = round(charge_start / 1000)
     now = int(time())
-    
+
     # Replace relative timestamp (seconds) with real timestamp
     data = [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
-    
+
     # Filter to points from now onwards
     data = [x for x in data if x["t"] > now]
-    
+
     # Give up if we have less than 3 points
     if len(data) < 3:
         return None
@@ -33,4 +34,3 @@ def charge_graph_next_slot(charge_start, points):
 
     # This needs to be presented with tzinfo or Home Assistant will reject it
     return None if next_ts is None else datetime.utcfromtimestamp(next_ts).replace(tzinfo=pytz.utc)
-

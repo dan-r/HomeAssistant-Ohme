@@ -1,6 +1,6 @@
 from homeassistant import core
 from .const import *
-from .client import OhmeApiClient
+from .api_client import OhmeApiClient
 from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
 
 

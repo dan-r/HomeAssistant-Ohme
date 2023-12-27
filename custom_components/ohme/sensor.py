@@ -14,6 +14,7 @@ from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR, DATA_STATISTICS_COORDI
 from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
 from .utils import charge_graph_next_slot
 
+
 async def async_setup_entry(
     hass: core.HomeAssistant,
     config_entry: config_entries.ConfigEntry,
@@ -114,6 +115,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
 
         return None
 
+
 class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
     """Sensor for next smart charge slot."""
     _attr_name = "Next Smart Charge Slot"
@@ -158,7 +160,8 @@ class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorE
         if self.coordinator.data is None:
             self._state = None
         else:
-            self._state = charge_graph_next_slot(self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+            self._state = charge_graph_next_slot(
+                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
 
         self._last_updated = utcnow()
 

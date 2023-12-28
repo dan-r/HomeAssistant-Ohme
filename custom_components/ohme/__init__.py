@@ -31,7 +31,8 @@ async def async_setup_entry(hass, entry):
 
     await async_setup_dependencies(hass, config)
 
-    hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR] = OhmeChargeSessionsCoordinator(hass=hass)
+    hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR] = OhmeChargeSessionsCoordinator(
+        hass=hass)
     await hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR].async_config_entry_first_refresh()
 
     hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsCoordinator(
@@ -51,6 +52,9 @@ async def async_setup_entry(hass, entry):
     )
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "switch")
+    )
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "button")
     )
 
     return True

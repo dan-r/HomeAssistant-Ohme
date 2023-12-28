@@ -11,8 +11,8 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.util.dt import (utcnow)
 
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR
-from .coordinator import OhmeUpdateCoordinator
+from .const import DOMAIN, DATA_CLIENT, DATA_CHARGESESSIONS_COORDINATOR, DATA_ACCOUNTINFO_COORDINATOR
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,16 +23,30 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
+    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
+    accountinfo_coordinator = hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR]
     client = hass.data[DOMAIN][DATA_CLIENT]
 
-    buttons = [OhmePauseCharge(coordinator, hass, client),
-               OhmeMaxCharge(coordinator, hass, client)]
+    switches = [OhmePauseChargeSwitch(coordinator, hass, client),
+               OhmeMaxChargeSwitch(coordinator, hass, client)]
+    
+    if client.is_capable("buttonsLockable"):
+        switches.append(
+               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Lock Buttons", "lock", "buttonsLocked")
+        )
+    if client.is_capable("pluginsRequireApprovalMode"):
+        switches.append(
+               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Require Approval", "check-decagram", "pluginsRequireApproval")
+        )
+    if client.is_capable("stealth"):
+        switches.append(
+               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Sleep When Inactive", "power-sleep", "stealthEnabled")
+        )
 
-    async_add_entities(buttons, update_before_add=True)
+    async_add_entities(switches, update_before_add=True)
 
 
-class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
+class OhmePauseChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):
     """Switch for pausing a charge."""
     _attr_name = "Pause Charge"
 
@@ -89,7 +103,7 @@ class OhmePauseCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
         await self.coordinator.async_refresh()
 
 
-class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
+class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):
     """Switch for pausing a charge."""
     _attr_name = "Max Charge"
 
@@ -142,6 +156,64 @@ class OhmeMaxCharge(CoordinatorEntity[OhmeUpdateCoordinator], SwitchEntity):
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_stop_max_charge()
+
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
+
+
+class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
+    """Switch for changing configuration options."""
+
+    def __init__(self, coordinator, hass: HomeAssistant, client, name, icon, config_key):
+        super().__init__(coordinator=coordinator)
+
+        self._client = client
+
+        self._state = False
+        self._last_updated = None
+        self._attributes = {}
+
+        self._icon = icon
+        self._attr_name = name
+        self._config_key = config_key
+        self.entity_id = generate_entity_id(
+            "switch.{}", "ohme_" + name.lower().replace(' ', '_'), hass=hass)
+
+        self._attr_device_info = client.get_device_info()
+
+    @property
+    def unique_id(self):
+        """The unique ID of the switch."""
+        return self._client.get_unique_id(self._config_key)
+
+    @property
+    def icon(self):
+        """Icon of the switch."""
+        return f"mdi:{self._icon}"
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Determine configuration value."""
+        if self.coordinator.data is None:
+            self._attr_is_on = None
+        else:
+            settings = self.coordinator.data["chargeDevices"][0]["optionalSettings"]
+            self._attr_is_on = bool(settings[self._config_key])
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()
+
+    async def async_turn_on(self):
+        """Turn on the switch."""
+        await self._client.async_set_configuration_value({ self._config_key: True })
+
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
+
+    async def async_turn_off(self):
+        """Turn off the switch."""
+        await self._client.async_set_configuration_value({ self._config_key: False})
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

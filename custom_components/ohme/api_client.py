@@ -1,5 +1,6 @@
 import aiohttp
 import logging
+import json
 from datetime import datetime, timedelta
 from homeassistant.helpers.entity import DeviceInfo
 from .const import DOMAIN
@@ -18,6 +19,7 @@ class OhmeApiClient:
         self._password = password
 
         self._device_info = None
+        self._capabilities = {}
         self._token = None
         self._user_id = ""
         self._serial = ""
@@ -63,8 +65,11 @@ class OhmeApiClient:
            If we get a non 200 response, refresh auth token and try again"""
         async with self._session.put(
             url,
-            data=data,
-            headers={"Authorization": "Firebase %s" % self._token}
+            data=json.dumps(data),
+            headers={
+                "Authorization": "Firebase %s" % self._token,
+                "Content-Type": "application/json"
+                }
         ) as resp:
             if resp.status != 200 and not is_retry:
                 await self.async_refresh_session()
@@ -110,6 +115,11 @@ class OhmeApiClient:
         result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/rule?enableMaxPrice=false&toPercent=80.0&inSeconds=43200")
         return bool(result)
 
+    async def async_set_configuration_value(self, values):
+        """Set a configuration value or values."""
+        result = await self._put_request(f"https://api.ohme.io/v1/chargeDevices/{self._serial}/appSettings", data=values)
+        return bool(result)
+
     async def async_get_charge_sessions(self, is_retry=False):
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
@@ -120,9 +130,17 @@ class OhmeApiClient:
 
         return resp[0]
 
+    async def async_get_account_info(self):
+        resp = await self._get_request('https://api.ohme.io/v1/users/me/account')
+
+        if not resp:
+            return False
+        
+        return resp
+
     async def async_update_device_info(self, is_retry=False):
         """Update _device_info with our charger model."""
-        resp = await self._get_request('https://api.ohme.io/v1/users/me/account')
+        resp = await self.async_get_account_info()
 
         if not resp:
             return False
@@ -138,12 +156,17 @@ class OhmeApiClient:
             serial_number=device['id']
         )
 
+        self._capabilities = device['modelCapabilities']
         self._user_id = resp['user']['id']
         self._serial = device['id']
         self._device_info = info
 
         return True
 
+    def is_capable(self, capability):
+        """Return whether or not this model has a given capability."""
+        return bool(self._capabilities[capability])
+    
     def _last_second_of_month_timestamp(self):
         """Get the last second of this month."""
         dt = datetime.today()

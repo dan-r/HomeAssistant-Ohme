@@ -15,7 +15,7 @@ async def async_setup_dependencies(hass, config):
     hass.data[DOMAIN][DATA_CLIENT] = client
 
     await client.async_refresh_session()
-    await client.async_update_account_info()
+    await client.async_update_device_info()
 
 
 async def async_setup_entry(hass, entry):

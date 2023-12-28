@@ -19,6 +19,7 @@ class OhmeApiClient:
         self._password = password
 
         self._device_info = None
+        self._capabilities = {}
         self._token = None
         self._user_id = ""
         self._serial = ""
@@ -136,8 +137,8 @@ class OhmeApiClient:
             return False
         
         return resp
-    
-    async def async_update_account_info(self, is_retry=False):
+
+    async def async_update_device_info(self, is_retry=False):
         """Update _device_info with our charger model."""
         resp = await self.async_get_account_info()
 
@@ -155,12 +156,17 @@ class OhmeApiClient:
             serial_number=device['id']
         )
 
+        self._capabilities = device['modelCapabilities']
         self._user_id = resp['user']['id']
         self._serial = device['id']
         self._device_info = info
 
         return True
 
+    def is_capable(self, capability):
+        """Return whether or not this model has a given capability."""
+        return bool(self._capabilities[capability])
+    
     def _last_second_of_month_timestamp(self):
         """Get the last second of this month."""
         dt = datetime.today()

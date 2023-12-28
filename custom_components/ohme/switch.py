@@ -27,14 +27,23 @@ async def async_setup_entry(
     accountinfo_coordinator = hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR]
     client = hass.data[DOMAIN][DATA_CLIENT]
 
-    buttons = [OhmePauseChargeSwitch(coordinator, hass, client),
-               OhmeMaxChargeSwitch(coordinator, hass, client),
-               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Lock Buttons", "lock", "buttonsLocked"),
-               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Require Approval", "check-decagram", "pluginsRequireApproval"),
+    switches = [OhmePauseChargeSwitch(coordinator, hass, client),
+               OhmeMaxChargeSwitch(coordinator, hass, client)]
+    
+    if client.is_capable("buttonsLockable"):
+        switches.append(
+               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Lock Buttons", "lock", "buttonsLocked")
+        )
+    if client.is_capable("pluginsRequireApprovalMode"):
+        switches.append(
+               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Require Approval", "check-decagram", "pluginsRequireApproval")
+        )
+    if client.is_capable("stealth"):
+        switches.append(
                OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Sleep When Inactive", "power-sleep", "stealthEnabled")
-              ]
+        )
 
-    async_add_entities(buttons, update_before_add=True)
+    async_add_entities(switches, update_before_add=True)
 
 
 class OhmePauseChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):

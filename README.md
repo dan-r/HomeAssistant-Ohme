@@ -16,7 +16,7 @@ This integration exposes the following entities:
     * Power Draw (Watts) - Power draw of connected car
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
     * Next Smart Charge Slot - The next time your car will start charging according to the Ohme-generated charge plan
-* Switches (Settings)
+* Switches (Settings) - Only options available to your charger model will show
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge
     * Sleep When Inactive - Charger screen & lights will automatically turn off

@@ -76,7 +76,9 @@ class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEn
 class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
     """Sensor for total energy usage."""
     _attr_name = "Accumulative Energy Usage"
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_suggested_display_precision = 1
     _attr_device_class = SensorDeviceClass.ENERGY
 
     def __init__(
@@ -111,7 +113,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
     def native_value(self):
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data and self.coordinator.data['energyChargedTotalWh']:
-            return self.coordinator.data['energyChargedTotalWh'] / 1000
+            return self.coordinator.data['energyChargedTotalWh']
 
         return None
 

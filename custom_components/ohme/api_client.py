@@ -69,7 +69,7 @@ class OhmeApiClient:
             headers={
                 "Authorization": "Firebase %s" % self._token,
                 "Content-Type": "application/json"
-                }
+            }
         ) as resp:
             if resp.status != 200 and not is_retry:
                 await self.async_refresh_session()
@@ -104,6 +104,11 @@ class OhmeApiClient:
         result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/resume", skip_json=True)
         return bool(result)
 
+    async def async_approve_charge(self):
+        """Approve a charge"""
+        result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/approve?approve=true")
+        return bool(result)
+
     async def async_max_charge(self):
         """Enable max charge"""
         result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
@@ -135,7 +140,7 @@ class OhmeApiClient:
 
         if not resp:
             return False
-        
+
         return resp
 
     async def async_update_device_info(self, is_retry=False):
@@ -166,7 +171,7 @@ class OhmeApiClient:
     def is_capable(self, capability):
         """Return whether or not this model has a given capability."""
         return bool(self._capabilities[capability])
-    
+
     def _last_second_of_month_timestamp(self):
         """Get the last second of this month."""
         dt = datetime.today()

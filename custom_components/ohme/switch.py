@@ -28,19 +28,22 @@ async def async_setup_entry(
     client = hass.data[DOMAIN][DATA_CLIENT]
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),
-               OhmeMaxChargeSwitch(coordinator, hass, client)]
-    
+                OhmeMaxChargeSwitch(coordinator, hass, client)]
+
     if client.is_capable("buttonsLockable"):
         switches.append(
-               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Lock Buttons", "lock", "buttonsLocked")
+            OhmeConfigurationSwitch(
+                accountinfo_coordinator, hass, client, "Lock Buttons", "lock", "buttonsLocked")
         )
     if client.is_capable("pluginsRequireApprovalMode"):
         switches.append(
-               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Require Approval", "check-decagram", "pluginsRequireApproval")
+            OhmeConfigurationSwitch(accountinfo_coordinator, hass, client,
+                                    "Require Approval", "check-decagram", "pluginsRequireApproval")
         )
     if client.is_capable("stealth"):
         switches.append(
-               OhmeConfigurationSwitch(accountinfo_coordinator, hass, client, "Sleep When Inactive", "power-sleep", "stealthEnabled")
+            OhmeConfigurationSwitch(accountinfo_coordinator, hass, client,
+                                    "Sleep When Inactive", "power-sleep", "stealthEnabled")
         )
 
     async_add_entities(switches, update_before_add=True)
@@ -206,14 +209,14 @@ class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Swi
 
     async def async_turn_on(self):
         """Turn on the switch."""
-        await self._client.async_set_configuration_value({ self._config_key: True })
+        await self._client.async_set_configuration_value({self._config_key: True})
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self):
         """Turn off the switch."""
-        await self._client.async_set_configuration_value({ self._config_key: False})
+        await self._client.async_set_configuration_value({self._config_key: False})
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

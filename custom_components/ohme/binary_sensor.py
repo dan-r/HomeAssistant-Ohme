@@ -22,7 +22,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
 
     sensors = [ConnectedSensor(coordinator, hass, client),
-               ChargingSensor(coordinator, hass, client)]
+               ChargingSensor(coordinator, hass, client),
+               PendingApprovalSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -116,5 +117,51 @@ class ChargingSensor(
             self._state = self.coordinator.data["power"]["watt"] > 0
         else:
             self._state = False
+
+        return self._state
+
+
+class PendingApprovalSensor(
+        CoordinatorEntity[OhmeChargeSessionsCoordinator],
+        BinarySensorEntity):
+    """Binary sensor for if a charge is pending approval."""
+
+    _attr_name = "Pending Approval"
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._attributes = {}
+        self._last_updated = None
+        self._state = False
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "binary_sensor.{}", "ohme_pending_approval", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:alert-decagram"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("pending_approval")
+
+    @property
+    def is_on(self) -> bool:
+        if self.coordinator.data is None:
+            self._state = False
+        else:
+            self._state = bool(
+                self.coordinator.data["mode"] == "PENDING_APPROVAL")
 
         return self._state

@@ -32,6 +32,7 @@ class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
         except BaseException:
             raise UpdateFailed("Error communicating with API")
 
+
 class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
     """Coordinator to pull from API periodically."""
 

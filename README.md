@@ -12,6 +12,7 @@ This integration exposes the following entities:
 * Binary Sensors
     * Car Connected - On when a car is plugged in
     * Car Charging - On when a car is connected and drawing power
+    * Pending Approval - On when a car is connected and waiting for approval
 * Sensors
     * Power Draw (Watts) - Power draw of connected car
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
@@ -23,6 +24,8 @@ This integration exposes the following entities:
 * Switches (Charge state) - These are only functional when a car is connected
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
+* Buttons
+    * Approve Charge - Approves a charge when 'Pending Approval' is on
 
 ## Installation
 

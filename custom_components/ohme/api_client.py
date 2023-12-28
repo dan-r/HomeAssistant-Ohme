@@ -1,5 +1,6 @@
 import aiohttp
 import logging
+import json
 from datetime import datetime, timedelta
 from homeassistant.helpers.entity import DeviceInfo
 from .const import DOMAIN
@@ -63,8 +64,11 @@ class OhmeApiClient:
            If we get a non 200 response, refresh auth token and try again"""
         async with self._session.put(
             url,
-            data=data,
-            headers={"Authorization": "Firebase %s" % self._token}
+            data=json.dumps(data),
+            headers={
+                "Authorization": "Firebase %s" % self._token,
+                "Content-Type": "application/json"
+                }
         ) as resp:
             if resp.status != 200 and not is_retry:
                 await self.async_refresh_session()
@@ -110,6 +114,11 @@ class OhmeApiClient:
         result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/rule?enableMaxPrice=false&toPercent=80.0&inSeconds=43200")
         return bool(result)
 
+    async def async_set_configuration_value(self, values):
+        """Set a configuration value or values."""
+        result = await self._put_request(f"https://api.ohme.io/v1/chargeDevices/{self._serial}/appSettings", data=values)
+        return bool(result)
+
     async def async_get_charge_sessions(self, is_retry=False):
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
@@ -120,9 +129,17 @@ class OhmeApiClient:
 
         return resp[0]
 
-    async def async_update_device_info(self, is_retry=False):
-        """Update _device_info with our charger model."""
+    async def async_get_account_info(self):
         resp = await self._get_request('https://api.ohme.io/v1/users/me/account')
+
+        if not resp:
+            return False
+        
+        return resp
+    
+    async def async_update_account_info(self, is_retry=False):
+        """Update _device_info with our charger model."""
+        resp = await self.async_get_account_info()
 
         if not resp:
             return False

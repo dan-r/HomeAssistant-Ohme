@@ -1,7 +1,7 @@
 from homeassistant import core
 from .const import *
 from .api_client import OhmeApiClient
-from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAccountInfoCoordinator
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
@@ -15,7 +15,7 @@ async def async_setup_dependencies(hass, config):
     hass.data[DOMAIN][DATA_CLIENT] = client
 
     await client.async_refresh_session()
-    await client.async_update_device_info()
+    await client.async_update_account_info()
 
 
 async def async_setup_entry(hass, entry):
@@ -31,12 +31,16 @@ async def async_setup_entry(hass, entry):
 
     await async_setup_dependencies(hass, config)
 
-    hass.data[DOMAIN][DATA_COORDINATOR] = OhmeUpdateCoordinator(hass=hass)
-    await hass.data[DOMAIN][DATA_COORDINATOR].async_config_entry_first_refresh()
+    hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR] = OhmeChargeSessionsCoordinator(hass=hass)
+    await hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR].async_config_entry_first_refresh()
 
-    hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsUpdateCoordinator(
+    hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsCoordinator(
         hass=hass)
     await hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR].async_config_entry_first_refresh()
+
+    hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR] = OhmeAccountInfoCoordinator(
+        hass=hass)
+    await hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR].async_config_entry_first_refresh()
 
     # Create tasks for each entity type
     hass.async_create_task(

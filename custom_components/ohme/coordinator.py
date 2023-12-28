@@ -11,7 +11,7 @@ from .const import DOMAIN, DATA_CLIENT
 _LOGGER = logging.getLogger(__name__)
 
 
-class OhmeUpdateCoordinator(DataUpdateCoordinator):
+class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
     """Coordinator to pull from API periodically."""
 
     def __init__(self, hass):
@@ -32,8 +32,29 @@ class OhmeUpdateCoordinator(DataUpdateCoordinator):
         except BaseException:
             raise UpdateFailed("Error communicating with API")
 
+class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
+    """Coordinator to pull from API periodically."""
 
-class OhmeStatisticsUpdateCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass):
+        """Initialise coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="Ohme Account Info",
+            update_interval=timedelta(minutes=1),
+        )
+        self._client = hass.data[DOMAIN][DATA_CLIENT]
+
+    async def _async_update_data(self):
+        """Fetch data from API endpoint."""
+        try:
+            return await self._client.async_get_account_info()
+
+        except BaseException:
+            raise UpdateFailed("Error communicating with API")
+
+
+class OhmeStatisticsCoordinator(DataUpdateCoordinator):
     """Coordinator to update statistics from API periodically.
        (But less so than OhmeUpdateCoordinator)"""
 

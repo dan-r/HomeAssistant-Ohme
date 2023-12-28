@@ -8,8 +8,8 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
-from .const import DOMAIN, DATA_COORDINATOR, DATA_CLIENT
-from .coordinator import OhmeUpdateCoordinator
+from .const import DOMAIN, DATA_CHARGESESSIONS_COORDINATOR, DATA_CLIENT
+from .coordinator import OhmeChargeSessionsCoordinator
 
 
 async def async_setup_entry(
@@ -19,7 +19,7 @@ async def async_setup_entry(
 ):
     """Setup sensors and configure coordinator."""
     client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
+    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
 
     sensors = [ConnectedSensor(coordinator, hass, client),
                ChargingSensor(coordinator, hass, client)]
@@ -28,7 +28,7 @@ async def async_setup_entry(
 
 
 class ConnectedSensor(
-        CoordinatorEntity[OhmeUpdateCoordinator],
+        CoordinatorEntity[OhmeChargeSessionsCoordinator],
         BinarySensorEntity):
     """Binary sensor for if car is plugged in."""
 
@@ -37,7 +37,7 @@ class ConnectedSensor(
 
     def __init__(
             self,
-            coordinator: OhmeUpdateCoordinator,
+            coordinator: OhmeChargeSessionsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)
@@ -74,7 +74,7 @@ class ConnectedSensor(
 
 
 class ChargingSensor(
-        CoordinatorEntity[OhmeUpdateCoordinator],
+        CoordinatorEntity[OhmeChargeSessionsCoordinator],
         BinarySensorEntity):
     """Binary sensor for if car is charging."""
 
@@ -83,7 +83,7 @@ class ChargingSensor(
 
     def __init__(
             self,
-            coordinator: OhmeUpdateCoordinator,
+            coordinator: OhmeChargeSessionsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)

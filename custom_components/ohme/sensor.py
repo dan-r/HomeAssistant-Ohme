@@ -10,8 +10,8 @@ from homeassistant.const import UnitOfPower, UnitOfEnergy
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATOR, DATA_STATISTICS_COORDINATOR
-from .coordinator import OhmeUpdateCoordinator, OhmeStatisticsUpdateCoordinator
+from .const import DOMAIN, DATA_CLIENT, DATA_CHARGESESSIONS_COORDINATOR, DATA_STATISTICS_COORDINATOR
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator
 from .utils import charge_graph_next_slot
 
 
@@ -22,7 +22,7 @@ async def async_setup_entry(
 ):
     """Setup sensors and configure coordinator."""
     client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_COORDINATOR]
+    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
     stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
 
     sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(
@@ -31,7 +31,7 @@ async def async_setup_entry(
     async_add_entities(sensors, update_before_add=True)
 
 
-class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
+class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for car power draw."""
     _attr_name = "Current Power Draw"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
@@ -39,7 +39,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
 
     def __init__(
             self,
-            coordinator: OhmeUpdateCoordinator,
+            coordinator: OhmeChargeSessionsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)
@@ -73,7 +73,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeUpdateCoordinator], SensorEntity):
         return 0
 
 
-class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
+class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
     """Sensor for total energy usage."""
     _attr_name = "Accumulative Energy Usage"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
@@ -81,7 +81,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
 
     def __init__(
             self,
-            coordinator: OhmeUpdateCoordinator,
+            coordinator: OhmeChargeSessionsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)
@@ -116,14 +116,14 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], Sens
         return None
 
 
-class NextSlotSensor(CoordinatorEntity[OhmeStatisticsUpdateCoordinator], SensorEntity):
+class NextSlotSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
     """Sensor for next smart charge slot."""
     _attr_name = "Next Smart Charge Slot"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
     def __init__(
             self,
-            coordinator: OhmeUpdateCoordinator,
+            coordinator: OhmeChargeSessionsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)

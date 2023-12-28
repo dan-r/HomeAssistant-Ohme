@@ -6,8 +6,6 @@ This is an unofficial integration. I have no affiliation with Ohme besides ownin
 
 This has only be tested with an Ohme Home Pro and does not currently support social login or accounts with multiple chargers.
 
-It's still very early in development but I plan to add more sensors and support for pausing/resuming charge.
-
 ## Entities
 This integration exposes the following entities:
 
@@ -18,7 +16,11 @@ This integration exposes the following entities:
     * Power Draw (Watts) - Power draw of connected car
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
     * Next Smart Charge Slot - The next time your car will start charging according to the Ohme-generated charge plan
-* Switches - These are only functional when a car is connected
+* Switches (Settings) - These are only functional when a car is connected
+    * Lock Buttons - Locks buttons on charger
+    * Require Approval - Require approval to start a charge
+    * Sleep When Inactive - Charger screen & lights will automatically turn off
+* Switches (Charge state) - These are only functional when a car is connected
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
 

@@ -29,7 +29,7 @@ def charge_graph_next_slot(charge_start, points):
         # If the next point has a Y delta of 10+, consider this the start of a slot
         # This should be 0+ but I had some strange results in testing... revisit
         if delta > 10:
-            next_ts = data[idx]["t"]
+            next_ts = data[idx]["t"] + 1 # 1s added here as it otherwise often rounds down to xx:59:59
             break
 
     # This needs to be presented with tzinfo or Home Assistant will reject it

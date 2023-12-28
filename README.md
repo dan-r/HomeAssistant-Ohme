@@ -4,7 +4,11 @@ A basic integration for interacting with Ohme EV Chargers.
 
 This is an unofficial integration. I have no affiliation with Ohme besides owning one of their EV chargers.
 
-This has only be tested with an Ohme Home Pro and does not currently support social login or accounts with multiple chargers.
+This integration does not currently support social login or accounts with multiple chargers. It has been tested with the following hardware:
+* Ohme Home Pro [UK]
+* Ohme Home/Go [UK]
+
+If you find any bugs or would like to request a feature, please open an issue.
 
 ## Entities
 This integration exposes the following entities:

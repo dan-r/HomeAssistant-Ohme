@@ -57,9 +57,8 @@ class OhmeApiClient:
         
         # Don't refresh token unless its over 45 mins old
         if time() - self._token_birth < 2700:
-            _LOGGER.warning((time() - self._token_birth))
             return
-        _LOGGER.warning("Starting token refresh.")
+
         async with self._auth_session.post(
             f"https://securetoken.googleapis.com/v1/token?key={GOOGLE_API_KEY}",
             data={"grantType": "refresh_token",
@@ -75,7 +74,6 @@ class OhmeApiClient:
             self._token_birth = time()
             self._token = resp_json['id_token']
             self._refresh_token = resp_json['refresh_token']
-            _LOGGER.warning("Very nice, great success.")
             return True
 
 

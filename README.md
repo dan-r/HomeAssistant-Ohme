@@ -7,6 +7,7 @@ This is an unofficial integration. I have no affiliation with Ohme besides ownin
 This integration does not currently support social login or accounts with multiple chargers. It has been tested with the following hardware:
 * Ohme Home Pro [UK]
 * Ohme Home/Go [UK]
+* Ohme ePod [UK]
 
 If you find any bugs or would like to request a feature, please open an issue.
 

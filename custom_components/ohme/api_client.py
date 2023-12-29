@@ -18,22 +18,30 @@ class OhmeApiClient:
         if email is None or password is None:
             raise Exception("Credentials not provided")
 
+        # Credentials from configuration
         self._email = email
         self._password = password
 
+        # Charger and its capabilities
         self._device_info = None
         self._capabilities = {}
+
+        # Authentication
         self._token_birth = 0
         self._token = None
         self._refresh_token = None
+
+        # User info
         self._user_id = ""
         self._serial = ""
+
+        # Sessions
         self._session = aiohttp.ClientSession(
             base_url="https://api.ohme.io")
         self._auth_session = aiohttp.ClientSession()
 
-
     # Auth methods
+
     async def async_create_session(self):
         """Refresh the user auth token from the stored credentials."""
         async with self._auth_session.post(
@@ -54,7 +62,7 @@ class OhmeApiClient:
         """Refresh auth token if needed."""
         if self._token is None:
             return await self.async_create_session()
-        
+
         # Don't refresh token unless its over 45 mins old
         if time() - self._token_birth < 2700:
             return
@@ -76,8 +84,8 @@ class OhmeApiClient:
             self._refresh_token = resp_json['refresh_token']
             return True
 
-
     # Internal methods
+
     def _last_second_of_month_timestamp(self):
         """Get the last second of this month."""
         dt = datetime.today()
@@ -139,20 +147,20 @@ class OhmeApiClient:
 
             return await resp.json()
 
-
     # Simple getters
+
     def is_capable(self, capability):
         """Return whether or not this model has a given capability."""
         return bool(self._capabilities[capability])
-    
+
     def get_device_info(self):
         return self._device_info
 
     def get_unique_id(self, name):
         return f"ohme_{self._serial}_{name}"
-    
 
     # Push methods
+
     async def async_pause_charge(self):
         """Pause an ongoing charge"""
         result = await self._post_request(f"/v1/chargeSessions/{self._serial}/stop", skip_json=True)
@@ -173,10 +181,13 @@ class OhmeApiClient:
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
         return bool(result)
 
-    async def async_stop_max_charge(self):
-        """Stop max charge.
-           This is more complicated than starting one as we need to give more parameters."""
-        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice=false&toPercent=80.0&inSeconds=43200")
+    async def async_apply_charge_rule(self, max_price=False, target_ts=0, target_percent=100, pre_condition=False, pre_condition_length=0):
+        """Apply charge rule/stop max charge."""
+
+        max_price = 'true' if max_price else 'false'
+        pre_condition = 'true' if pre_condition else 'false'
+
+        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
         return bool(result)
 
     async def async_set_configuration_value(self, values):
@@ -184,8 +195,8 @@ class OhmeApiClient:
         result = await self._put_request(f"/v1/chargeDevices/{self._serial}/appSettings", data=values)
         return bool(result)
 
-
     # Pull methods
+
     async def async_get_charge_sessions(self, is_retry=False):
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
@@ -234,10 +245,10 @@ class OhmeApiClient:
         return resp['clampAmps']
 
 
-
 # Exceptions
 class ApiException(Exception):
     ...
+
 
 class AuthException(ApiException):
     ...

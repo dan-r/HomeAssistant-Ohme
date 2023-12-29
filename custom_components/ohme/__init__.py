@@ -14,7 +14,7 @@ async def async_setup_dependencies(hass, config):
     client = OhmeApiClient(config['email'], config['password'])
     hass.data[DOMAIN][DATA_CLIENT] = client
 
-    await client.async_refresh_session()
+    await client.async_create_session()
     await client.async_update_device_info()
 
 

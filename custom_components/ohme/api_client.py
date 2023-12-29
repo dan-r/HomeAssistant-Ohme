@@ -227,6 +227,12 @@ class OhmeApiClient:
 
         return resp['totalStats']
 
+    async def async_get_ct_reading(self):
+        """Get CT clamp reading."""
+        resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
+
+        return resp['clampAmps']
+
 
 
 # Exceptions

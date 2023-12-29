@@ -12,14 +12,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
-    """Coordinator to pull from API periodically."""
+    """Coordinator to pull main charge state and power/current draw."""
 
     def __init__(self, hass):
         """Initialise coordinator."""
         super().__init__(
             hass,
             _LOGGER,
-            name="Ohme Charger",
+            name="Ohme Charge Sessions",
             update_interval=timedelta(seconds=30),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
@@ -34,7 +34,7 @@ class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
 
 
 class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
-    """Coordinator to pull from API periodically."""
+    """Coordinator to pull charger settings."""
 
     def __init__(self, hass):
         """Initialise coordinator."""
@@ -57,7 +57,7 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
 
 class OhmeStatisticsCoordinator(DataUpdateCoordinator):
     """Coordinator to update statistics from API periodically.
-       (But less so than OhmeUpdateCoordinator)"""
+       (But less so than the others)"""
 
     def __init__(self, hass):
         """Initialise coordinator."""
@@ -73,6 +73,27 @@ class OhmeStatisticsCoordinator(DataUpdateCoordinator):
         """Fetch data from API endpoint."""
         try:
             return await self._client.async_get_charge_statistics()
+
+        except BaseException:
+            raise UpdateFailed("Error communicating with API")
+
+class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
+    """Coordinator to pull CT clamp reading."""
+
+    def __init__(self, hass):
+        """Initialise coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="Ohme Advanced Settings",
+            update_interval=timedelta(minutes=1),
+        )
+        self._client = hass.data[DOMAIN][DATA_CLIENT]
+
+    async def _async_update_data(self):
+        """Fetch data from API endpoint."""
+        try:
+            return await self._client.async_get_ct_reading()
 
         except BaseException:
             raise UpdateFailed("Error communicating with API")

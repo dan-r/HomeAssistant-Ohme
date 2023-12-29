@@ -31,17 +31,16 @@ async def async_setup_entry(hass, entry):
 
     await async_setup_dependencies(hass, config)
 
-    hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR] = OhmeChargeSessionsCoordinator(
-        hass=hass)
-    await hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR].async_config_entry_first_refresh()
+    coordinators = [
+        OhmeChargeSessionsCoordinator(hass=hass),   # COORDINATOR_CHARGESESSIONS
+        OhmeAccountInfoCoordinator(hass=hass),      # COORDINATOR_ACCOUNTINFO
+        OhmeStatisticsCoordinator(hass=hass)        # COORDINATOR_STATISTICS
+    ]
 
-    hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR] = OhmeStatisticsCoordinator(
-        hass=hass)
-    await hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR].async_config_entry_first_refresh()
+    for coordinator in coordinators:
+        await coordinator.async_config_entry_first_refresh()
 
-    hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR] = OhmeAccountInfoCoordinator(
-        hass=hass)
-    await hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR].async_config_entry_first_refresh()
+    hass.data[DOMAIN][DATA_COORDINATORS] = coordinators
 
     # Create tasks for each entity type
     hass.async_create_task(

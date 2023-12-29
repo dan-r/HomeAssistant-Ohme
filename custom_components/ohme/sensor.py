@@ -10,7 +10,7 @@ from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_CLIENT, DATA_CHARGESESSIONS_COORDINATOR, DATA_STATISTICS_COORDINATOR
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator
 from .utils import charge_graph_next_slot
 
@@ -22,8 +22,10 @@ async def async_setup_entry(
 ):
     """Setup sensors and configure coordinator."""
     client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
-    stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
+    coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
+
+    coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
+    stats_coordinator = coordinators[COORDINATOR_STATISTICS]
 
     sensors = [PowerDrawSensor(coordinator, hass, client),
                CurrentDrawSensor(coordinator, hass, client),

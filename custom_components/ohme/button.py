@@ -6,7 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.components.button import ButtonEntity
 
-from .const import DOMAIN, DATA_CLIENT, DATA_CHARGESESSIONS_COORDINATOR
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS
 from .coordinator import OhmeChargeSessionsCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ async def async_setup_entry(
 ):
     """Setup switches."""
     client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
+    coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
 
     buttons = []
 

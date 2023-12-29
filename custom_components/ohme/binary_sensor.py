@@ -8,7 +8,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
-from .const import DOMAIN, DATA_CHARGESESSIONS_COORDINATOR, DATA_CLIENT
+from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, DATA_CLIENT
 from .coordinator import OhmeChargeSessionsCoordinator
 
 
@@ -19,7 +19,7 @@ async def async_setup_entry(
 ):
     """Setup sensors and configure coordinator."""
     client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
+    coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
 
     sensors = [ConnectedSensor(coordinator, hass, client),
                ChargingSensor(coordinator, hass, client),

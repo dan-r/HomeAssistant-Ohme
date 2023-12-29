@@ -1,5 +1,5 @@
 from time import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 
@@ -29,8 +29,19 @@ def charge_graph_next_slot(charge_start, points):
         # If the next point has a Y delta of 10+, consider this the start of a slot
         # This should be 0+ but I had some strange results in testing... revisit
         if delta > 10:
-            next_ts = data[idx]["t"] + 1 # 1s added here as it otherwise often rounds down to xx:59:59
+            # 1s added here as it otherwise often rounds down to xx:59:59
+            next_ts = data[idx]["t"] + 1
             break
 
     # This needs to be presented with tzinfo or Home Assistant will reject it
     return None if next_ts is None else datetime.utcfromtimestamp(next_ts).replace(tzinfo=pytz.utc)
+
+
+def time_next_occurs(hour, minute):
+    """Find when this time next occurs."""
+    current = datetime.now()
+    target = current.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    while target <= current:
+        target = target + timedelta(days=1)
+
+    return target

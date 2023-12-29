@@ -7,8 +7,28 @@ This is an unofficial integration. I have no affiliation with Ohme besides ownin
 This integration does not currently support social login or accounts with multiple chargers. It has been tested with the following hardware:
 * Ohme Home Pro [UK]
 * Ohme Home/Go [UK]
+* Ohme ePod [UK]
 
 If you find any bugs or would like to request a feature, please open an issue.
+
+
+## Installation
+
+### HACS
+This is the recommended installation method.
+1. Add this repository to HACS as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories)
+2. Search for and install the Ohme addon from HACS
+3. Restart Home Assistant
+
+### Manual
+1. Download the [latest release](https://github.com/dan-r/HomeAssistant-Ohme/releases)
+2. Copy the contents of `custom_components` into the `<config directory>/custom_components` directory of your Home Assistant installation
+3. Restart Home Assistant
+
+
+## Setup
+From the Home Assistant Integrations page, search for an add the Ohme integration. If you created your Ohme account through a social login, you will need to 'reset your password' to use this integration.
+
 
 ## Entities
 This integration exposes the following entities:
@@ -33,18 +53,20 @@ This integration exposes the following entities:
 * Buttons
     * Approve Charge - Approves a charge when 'Pending Approval' is on
 
-## Installation
+## Coordinators
+Updates are made to entity states by polling the Ohme API. This is handled by 'coordinators' defined to Home Assistant, which refresh at a set interval or when externally triggered.
 
-### HACS
-This is the recommended installation method.
-1. Add this repository to HACS as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories)
-2. Search for and install the Ohme addon from HACS
-3. Restart Home Assistant
+The coordinators are listed with their refresh intervals below. Relevant coordinators are also refreshed when using switches and buttons.
 
-### Manual
-1. Download the [latest release](https://github.com/dan-r/HomeAssistant-Ohme/releases)
-2. Copy the contents of `custom_components` into the `<config directory>/custom_components` directory of your Home Assistant installation
-3. Restart Home Assistant
+* OhmeChargeSessionsCoordinator (30s refresh)
+    * Binary Sensors: All
+    * Buttons: Approve Charge
+    * Sensors: Power, current and next slot
+    * Switches: Max charge, pause charge
+* OhmeAccountInfoCoordinator (1m refresh)
+    * Switches: Lock buttons, require approval and sleep when inactive
+* OhmeAdvancedSettingsCoordinator (1m refresh)
+    * Sensors: CT reading sensor
+* OhmeStatisticsCoordinator (30m refresh)
+    * Sensors: Accumulative energy usage
 
-## Setup
-From the Home Assistant Integrations page, search for an add the Ohme integration. If you created your Ohme account through a social login, you will need to 'reset your password' to use this integration.

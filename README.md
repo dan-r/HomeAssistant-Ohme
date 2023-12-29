@@ -34,6 +34,23 @@ This integration exposes the following entities:
 * Buttons
     * Approve Charge - Approves a charge when 'Pending Approval' is on
 
+## Coordinators
+Updates are made to entity states by polling the Ohme API. This is handled by 'coordinators' defined to Home Assistant, which refresh at a set interval or when externally triggered.
+
+The coordinators are listed with their refresh intervals below. Relevant coordinators are also refreshed when using switches and buttons.
+
+* OhmeChargeSessionsCoordinator (30s refresh)
+    * Binary Sensors: All
+    * Buttons: Approve Charge
+    * Sensors: Power, current and next slot
+    * Switches: Max charge, pause charge
+* OhmeAccountInfoCoordinator (1m refresh)
+    * Switches: Lock buttons, require approval and sleep when inactive
+* OhmeAdvancedSettingsCoordinator (1m refresh)
+    * Sensors: CT reading sensor
+* OhmeStatisticsCoordinator (30m refresh)
+    * Sensors: Accumulative energy usage
+
 ## Installation
 
 ### HACS

@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.util.dt import (utcnow)
 
-from .const import DOMAIN, DATA_CLIENT, DATA_CHARGESESSIONS_COORDINATOR, DATA_ACCOUNTINFO_COORDINATOR
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,8 +23,10 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
-    accountinfo_coordinator = hass.data[DOMAIN][DATA_ACCOUNTINFO_COORDINATOR]
+    coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
+
+    coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
+    accountinfo_coordinator = coordinators[COORDINATOR_ACCOUNTINFO]
     client = hass.data[DOMAIN][DATA_CLIENT]
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),

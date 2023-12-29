@@ -1,11 +1,14 @@
 import aiohttp
 import logging
 import json
+from time import time
 from datetime import datetime, timedelta
 from homeassistant.helpers.entity import DeviceInfo
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+GOOGLE_API_KEY = "AIzaSyC8ZeZngm33tpOXLpbXeKfwtyZ1WrkbdBY"
 
 
 class OhmeApiClient:
@@ -20,135 +23,184 @@ class OhmeApiClient:
 
         self._device_info = None
         self._capabilities = {}
+        self._token_birth = 0
         self._token = None
+        self._refresh_token = None
         self._user_id = ""
         self._serial = ""
-        self._session = aiohttp.ClientSession()
+        self._session = aiohttp.ClientSession(
+            base_url="https://api.ohme.io")
+        self._auth_session = aiohttp.ClientSession()
 
-    async def async_refresh_session(self):
+
+    # Auth methods
+    async def async_create_session(self):
         """Refresh the user auth token from the stored credentials."""
-        async with self._session.post(
-            'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyC8ZeZngm33tpOXLpbXeKfwtyZ1WrkbdBY',
+        async with self._auth_session.post(
+            f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key={GOOGLE_API_KEY}",
             data={"email": self._email, "password": self._password,
                   "returnSecureToken": True}
         ) as resp:
-
             if resp.status != 200:
                 return None
 
             resp_json = await resp.json()
+            self._token_birth = time()
             self._token = resp_json['idToken']
+            self._refresh_token = resp_json['refreshToken']
             return True
 
-    async def _post_request(self, url, skip_json=False, data=None, is_retry=False):
-        """Try to make a POST request
-           If we get a non 200 response, refresh auth token and try again"""
+    async def async_refresh_session(self):
+        """Refresh auth token if needed."""
+        if self._token is None:
+            return await self.async_create_session()
+        
+        # Don't refresh token unless its over 45 mins old
+        if time() - self._token_birth < 2700:
+            return
+
+        async with self._auth_session.post(
+            f"https://securetoken.googleapis.com/v1/token?key={GOOGLE_API_KEY}",
+            data={"grantType": "refresh_token",
+                  "refreshToken": self._refresh_token}
+        ) as resp:
+            if resp.status != 200:
+                text = await resp.text()
+                msg = f"Ohme auth refresh error: {text}"
+                _LOGGER.error(msg)
+                raise AuthException(msg)
+
+            resp_json = await resp.json()
+            self._token_birth = time()
+            self._token = resp_json['id_token']
+            self._refresh_token = resp_json['refresh_token']
+            return True
+
+
+    # Internal methods
+    def _last_second_of_month_timestamp(self):
+        """Get the last second of this month."""
+        dt = datetime.today()
+        dt = dt.replace(day=1) + timedelta(days=32)
+        dt = dt.replace(day=1, hour=0, minute=0, second=0,
+                        microsecond=0) - timedelta(seconds=1)
+        return int(dt.timestamp()*1e3)
+
+    async def _handle_api_error(self, url, resp):
+        """Raise an exception if API response failed."""
+        if resp.status != 200:
+            text = await resp.text()
+            msg = f"Ohme API response error: {url}, {resp.status}; {text}"
+            _LOGGER.error(msg)
+            raise ApiException(msg)
+
+    def _get_headers(self):
+        """Get auth and content-type headers"""
+        return {
+            "Authorization": "Firebase %s" % self._token,
+            "Content-Type": "application/json"
+        }
+
+    async def _post_request(self, url, skip_json=False, data=None):
+        """Make a POST request."""
+        await self.async_refresh_session()
         async with self._session.post(
             url,
             data=data,
-            headers={"Authorization": "Firebase %s" % self._token}
+            headers=self._get_headers()
         ) as resp:
-            if resp.status != 200 and not is_retry:
-                await self.async_refresh_session()
-                return await self._post_request(url, skip_json=skip_json, data=data, is_retry=True)
-            elif resp.status != 200:
-                return False
+            await self._handle_api_error(url, resp)
 
             if skip_json:
                 return await resp.text()
 
-            resp_json = await resp.json()
-            return resp_json
+            return await resp.json()
 
-    async def _put_request(self, url, data=None, is_retry=False):
-        """Try to make a PUT request
-           If we get a non 200 response, refresh auth token and try again"""
+    async def _put_request(self, url, data=None):
+        """Make a PUT request."""
+        await self.async_refresh_session()
         async with self._session.put(
             url,
             data=json.dumps(data),
-            headers={
-                "Authorization": "Firebase %s" % self._token,
-                "Content-Type": "application/json"
-            }
+            headers=self._get_headers()
         ) as resp:
-            if resp.status != 200 and not is_retry:
-                await self.async_refresh_session()
-                return await self._put_request(url, data=data, is_retry=True)
-            elif resp.status != 200:
-                return False
+            await self._handle_api_error(url, resp)
 
             return True
 
-    async def _get_request(self, url, is_retry=False):
-        """Try to make a GET request
-           If we get a non 200 response, refresh auth token and try again"""
+    async def _get_request(self, url):
+        """Make a GET request."""
+        await self.async_refresh_session()
         async with self._session.get(
             url,
-            headers={"Authorization": "Firebase %s" % self._token}
+            headers=self._get_headers()
         ) as resp:
-            if resp.status != 200 and not is_retry:
-                await self.async_refresh_session()
-                return await self._get_request(url, is_retry=True)
-            elif resp.status != 200:
-                return False
+            await self._handle_api_error(url, resp)
 
             return await resp.json()
 
+
+    # Simple getters
+    def is_capable(self, capability):
+        """Return whether or not this model has a given capability."""
+        return bool(self._capabilities[capability])
+    
+    def get_device_info(self):
+        return self._device_info
+
+    def get_unique_id(self, name):
+        return f"ohme_{self._serial}_{name}"
+    
+
+    # Push methods
     async def async_pause_charge(self):
         """Pause an ongoing charge"""
-        result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/stop", skip_json=True)
+        result = await self._post_request(f"/v1/chargeSessions/{self._serial}/stop", skip_json=True)
         return bool(result)
 
     async def async_resume_charge(self):
         """Resume a paused charge"""
-        result = await self._post_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/resume", skip_json=True)
+        result = await self._post_request(f"/v1/chargeSessions/{self._serial}/resume", skip_json=True)
         return bool(result)
 
     async def async_approve_charge(self):
         """Approve a charge"""
-        result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/approve?approve=true")
+        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/approve?approve=true")
         return bool(result)
 
     async def async_max_charge(self):
         """Enable max charge"""
-        result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
+        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
         return bool(result)
 
     async def async_stop_max_charge(self):
         """Stop max charge.
            This is more complicated than starting one as we need to give more parameters."""
-        result = await self._put_request(f"https://api.ohme.io/v1/chargeSessions/{self._serial}/rule?enableMaxPrice=false&toPercent=80.0&inSeconds=43200")
+        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice=false&toPercent=80.0&inSeconds=43200")
         return bool(result)
 
     async def async_set_configuration_value(self, values):
         """Set a configuration value or values."""
-        result = await self._put_request(f"https://api.ohme.io/v1/chargeDevices/{self._serial}/appSettings", data=values)
+        result = await self._put_request(f"/v1/chargeDevices/{self._serial}/appSettings", data=values)
         return bool(result)
 
+
+    # Pull methods
     async def async_get_charge_sessions(self, is_retry=False):
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
-        resp = await self._get_request('https://api.ohme.io/v1/chargeSessions')
-
-        if not resp:
-            return False
+        resp = await self._get_request('/v1/chargeSessions')
 
         return resp[0]
 
     async def async_get_account_info(self):
-        resp = await self._get_request('https://api.ohme.io/v1/users/me/account')
-
-        if not resp:
-            return False
+        resp = await self._get_request('/v1/users/me/account')
 
         return resp
 
     async def async_update_device_info(self, is_retry=False):
         """Update _device_info with our charger model."""
         resp = await self.async_get_account_info()
-
-        if not resp:
-            return False
 
         device = resp['chargeDevices'][0]
 
@@ -168,30 +220,24 @@ class OhmeApiClient:
 
         return True
 
-    def is_capable(self, capability):
-        """Return whether or not this model has a given capability."""
-        return bool(self._capabilities[capability])
-
-    def _last_second_of_month_timestamp(self):
-        """Get the last second of this month."""
-        dt = datetime.today()
-        dt = dt.replace(day=1) + timedelta(days=32)
-        dt = dt.replace(day=1, hour=0, minute=0, second=0,
-                        microsecond=0) - timedelta(seconds=1)
-        return int(dt.timestamp()*1e3)
-
     async def async_get_charge_statistics(self):
         """Get charge statistics. Currently this is just for all time (well, Jan 2019)."""
         end_ts = self._last_second_of_month_timestamp()
-        resp = await self._get_request(f"https://api.ohme.io/v1/chargeSessions/summary/users/{self._user_id}?&startTs=1546300800000&endTs={end_ts}&granularity=MONTH")
-
-        if not resp:
-            return False
+        resp = await self._get_request(f"/v1/chargeSessions/summary/users/{self._user_id}?&startTs=1546300800000&endTs={end_ts}&granularity=MONTH")
 
         return resp['totalStats']
 
-    def get_device_info(self):
-        return self._device_info
+    async def async_get_ct_reading(self):
+        """Get CT clamp reading."""
+        resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
 
-    def get_unique_id(self, name):
-        return f"ohme_{self._serial}_{name}"
+        return resp['clampAmps']
+
+
+
+# Exceptions
+class ApiException(Exception):
+    ...
+
+class AuthException(ApiException):
+    ...

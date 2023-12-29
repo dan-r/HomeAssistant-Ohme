@@ -1,7 +1,7 @@
 from homeassistant import core
 from .const import *
 from .api_client import OhmeApiClient
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAccountInfoCoordinator
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAccountInfoCoordinator, OhmeAdvancedSettingsCoordinator
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
@@ -34,7 +34,8 @@ async def async_setup_entry(hass, entry):
     coordinators = [
         OhmeChargeSessionsCoordinator(hass=hass),   # COORDINATOR_CHARGESESSIONS
         OhmeAccountInfoCoordinator(hass=hass),      # COORDINATOR_ACCOUNTINFO
-        OhmeStatisticsCoordinator(hass=hass)        # COORDINATOR_STATISTICS
+        OhmeStatisticsCoordinator(hass=hass),       # COORDINATOR_STATISTICS
+        OhmeAdvancedSettingsCoordinator(hass=hass)  # COORDINATOR_ADVANCED
     ]
 
     for coordinator in coordinators:

@@ -10,8 +10,8 @@ from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import charge_graph_next_slot
 
 
@@ -26,9 +26,11 @@ async def async_setup_entry(
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     stats_coordinator = coordinators[COORDINATOR_STATISTICS]
+    adv_coordinator = coordinators[COORDINATOR_ADVANCED]
 
     sensors = [PowerDrawSensor(coordinator, hass, client),
                CurrentDrawSensor(coordinator, hass, client),
+               CTSensor(adv_coordinator, hass, client),
                EnergyUsageSensor(stats_coordinator, hass, client),
                NextSlotSensor(coordinator, hass, client)]
 
@@ -117,6 +119,46 @@ class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         if self.coordinator.data and self.coordinator.data['power']:
             return self.coordinator.data['power']['amp']
         return 0
+
+
+class CTSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+    """Sensor for car power draw."""
+    _attr_name = "CT Reading"
+    _attr_device_class = SensorDeviceClass.CURRENT
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_ct_reading", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("ct_reading")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:gauge"
+
+    @property
+    def native_value(self):
+        """Get value from data returned from API by coordinator"""
+        return self.coordinator.data
 
 
 class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):

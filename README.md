@@ -20,6 +20,7 @@ This integration exposes the following entities:
 * Sensors
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
+    * CT Reading (Amps) - Reading from attached CT clamp
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
     * Next Smart Charge Slot - The next time your car will start charging according to the Ohme-generated charge plan
 * Switches (Settings) - Only options available to your charger model will show

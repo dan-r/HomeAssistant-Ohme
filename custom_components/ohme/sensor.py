@@ -6,7 +6,7 @@ from homeassistant.components.sensor import (
     SensorEntity
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import UnitOfPower, UnitOfEnergy
+from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
@@ -79,6 +79,7 @@ class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
     """Sensor for car power draw."""
     _attr_name = "Current Draw"
     _attr_device_class = SensorDeviceClass.CURRENT
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
 
     def __init__(
             self,

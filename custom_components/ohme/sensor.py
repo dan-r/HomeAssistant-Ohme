@@ -25,15 +25,17 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][DATA_CHARGESESSIONS_COORDINATOR]
     stats_coordinator = hass.data[DOMAIN][DATA_STATISTICS_COORDINATOR]
 
-    sensors = [PowerDrawSensor(coordinator, hass, client), EnergyUsageSensor(
-        stats_coordinator, hass, client), NextSlotSensor(coordinator, hass, client)]
+    sensors = [PowerDrawSensor(coordinator, hass, client),
+               CurrentDrawSensor(coordinator, hass, client),
+               EnergyUsageSensor(stats_coordinator, hass, client),
+               NextSlotSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
 
 class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for car power draw."""
-    _attr_name = "Current Power Draw"
+    _attr_name = "Power Draw"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
 
@@ -70,6 +72,47 @@ class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEn
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data and self.coordinator.data['power']:
             return self.coordinator.data['power']['watt']
+        return 0
+
+
+class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+    """Sensor for car power draw."""
+    _attr_name = "Current Draw"
+    _attr_device_class = SensorDeviceClass.CURRENT
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_current_draw", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("current_draw")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:current-ac"
+
+    @property
+    def native_value(self):
+        """Get value from data returned from API by coordinator"""
+        if self.coordinator.data and self.coordinator.data['power']:
+            return self.coordinator.data['power']['amp']
         return 0
 
 

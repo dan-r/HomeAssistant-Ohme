@@ -37,17 +37,21 @@ This integration exposes the following entities:
     * Car Connected - On when a car is plugged in
     * Car Charging - On when a car is connected and drawing power
     * Pending Approval - On when a car is connected and waiting for approval
-* Sensors
+    * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
+* Sensors (Charge power) - **These are only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
+    * Voltage (Volts) - Voltage reading
+* Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
-    * Next Smart Charge Slot - The next time your car will start charging according to the Ohme-generated charge plan
-* Switches (Settings) - Only options available to your charger model will show
+    * Next Charge Slot Start - The next time your car will start charging according to the Ohme-generated charge plan
+    * Next Charge Slot End - The next time your car will stop charging according to the Ohme-generated charge plan
+* Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge
     * Sleep When Inactive - Charger screen & lights will automatically turn off
-* Switches (Charge state) - These are only functional when a car is connected
+* Switches (Charge state) - **These are only functional when a car is connected**
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
 * Buttons
@@ -61,7 +65,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
 * OhmeChargeSessionsCoordinator (30s refresh)
     * Binary Sensors: All
     * Buttons: Approve Charge
-    * Sensors: Power, current and next slot
+    * Sensors: Power, current, voltage and next slot (start & end)
     * Switches: Max charge, pause charge
 * OhmeAccountInfoCoordinator (1m refresh)
     * Switches: Lock buttons, require approval and sleep when inactive

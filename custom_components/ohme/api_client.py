@@ -25,6 +25,7 @@ class OhmeApiClient:
         # Charger and its capabilities
         self._device_info = None
         self._capabilities = {}
+        self._ct_connected = False
 
         # Authentication
         self._token_birth = 0
@@ -149,6 +150,10 @@ class OhmeApiClient:
 
     # Simple getters
 
+    def ct_connected(self):
+        """Is CT clamp connected."""
+        return self._ct_connected
+    
     def is_capable(self, capability):
         """Return whether or not this model has a given capability."""
         return bool(self._capabilities[capability])
@@ -241,6 +246,10 @@ class OhmeApiClient:
     async def async_get_ct_reading(self):
         """Get CT clamp reading."""
         resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
+        
+        # If we ever get a reading above 0, assume CT connected
+        if resp['clampAmps'] > 0:
+            self._ct_connected = True
 
         return resp['clampAmps']
 

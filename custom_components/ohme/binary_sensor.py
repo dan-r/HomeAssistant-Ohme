@@ -6,10 +6,12 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
+from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, DATA_CLIENT
 from .coordinator import OhmeChargeSessionsCoordinator
+from .utils import charge_graph_in_slot
 
 
 async def async_setup_entry(
@@ -21,14 +23,15 @@ async def async_setup_entry(
     client = hass.data[DOMAIN][DATA_CLIENT]
     coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
 
-    sensors = [ConnectedSensor(coordinator, hass, client),
-               ChargingSensor(coordinator, hass, client),
-               PendingApprovalSensor(coordinator, hass, client)]
+    sensors = [ConnectedBinarySensor(coordinator, hass, client),
+               ChargingBinarySensor(coordinator, hass, client),
+               PendingApprovalBinarySensor(coordinator, hass, client),
+               CurrentSlotBinarySensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
 
-class ConnectedSensor(
+class ConnectedBinarySensor(
         CoordinatorEntity[OhmeChargeSessionsCoordinator],
         BinarySensorEntity):
     """Binary sensor for if car is plugged in."""
@@ -74,7 +77,7 @@ class ConnectedSensor(
         return self._state
 
 
-class ChargingSensor(
+class ChargingBinarySensor(
         CoordinatorEntity[OhmeChargeSessionsCoordinator],
         BinarySensorEntity):
     """Binary sensor for if car is charging."""
@@ -121,7 +124,7 @@ class ChargingSensor(
         return self._state
 
 
-class PendingApprovalSensor(
+class PendingApprovalBinarySensor(
         CoordinatorEntity[OhmeChargeSessionsCoordinator],
         BinarySensorEntity):
     """Binary sensor for if a charge is pending approval."""
@@ -165,3 +168,58 @@ class PendingApprovalSensor(
                 self.coordinator.data["mode"] == "PENDING_APPROVAL")
 
         return self._state
+
+
+class CurrentSlotBinarySensor(
+        CoordinatorEntity[OhmeChargeSessionsCoordinator],
+        BinarySensorEntity):
+    """Binary sensor for if we are currently in a smart charge slot."""
+
+    _attr_name = "Charge Slot Active"
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._attributes = {}
+        self._last_updated = None
+        self._state = False
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "binary_sensor.{}", "ohme_slot_active", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:calendar-check"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("ohme_slot_active")
+
+    @property
+    def is_on(self) -> bool:
+        return self._state
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Are we in a charge slot? This is a bit slow so we only update on coordinator data update."""
+        if self.coordinator.data is None:
+            self._state = None
+        elif self.coordinator.data["mode"] == "DISCONNECTED":
+            self._state = False
+        else:
+            self._state = charge_graph_in_slot(
+                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()

@@ -3,14 +3,17 @@ from datetime import datetime, timedelta
 import pytz
 
 
-def charge_graph_next_slot(charge_start, points):
-    """Get the next charge slot from a list of graph points."""
-    # Get start and current timestamp in seconds
-    charge_start = round(charge_start / 1000)
-    now = int(time())
+def _format_charge_graph(charge_start, points):
+    """Convert relative time in points array to real timestamp (s)."""
 
-    # Replace relative timestamp (seconds) with real timestamp
-    data = [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
+    charge_start = round(charge_start / 1000)
+    return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
+
+
+def charge_graph_next_slot(charge_start, points):
+    """Get the next charge slot start/end times from a list of graph points."""
+    now = int(time())
+    data = _format_charge_graph(charge_start, points)
 
     # Filter to points from now onwards
     data = [x for x in data if x["t"] > now]
@@ -32,15 +35,34 @@ def charge_graph_next_slot(charge_start, points):
         if delta > 10 and not start_ts:
             # 1s added here as it otherwise often rounds down to xx:59:59
             start_ts = data[idx]["t"] + 1
-        elif start_ts and delta == 0:  # If we have seen a start and see a delta of 0, this is the end
+
+        # Take the first delta of 0 as the end
+        if delta == 0 and not end_ts:
             end_ts = data[idx]["t"] + 1
-            break
 
     # These need to be presented with tzinfo or Home Assistant will reject them
     return {
         "start": datetime.utcfromtimestamp(start_ts).replace(tzinfo=pytz.utc) if start_ts else None,
         "end": datetime.utcfromtimestamp(end_ts).replace(tzinfo=pytz.utc) if end_ts else None,
     }
+
+
+def charge_graph_in_slot(charge_start, points):
+    """Are we currently in a charge slot?"""
+    now = int(time())
+    data = _format_charge_graph(charge_start, points)
+
+    # Loop through every value, skipping the last
+    for idx in range(0, len(data) - 1):
+        # This is our current point
+        if data[idx]["t"] < now and data[idx + 1]["t"] > now:
+            # If the delta line we are on is steeper than 10,
+            # we are in a charge slot.
+            if data[idx + 1]["y"] - data[idx]["y"] > 10:
+                return True
+            break
+
+    return False
 
 
 def time_next_occurs(hour, minute):

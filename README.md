@@ -37,6 +37,7 @@ This integration exposes the following entities:
     * Car Connected - On when a car is plugged in
     * Car Charging - On when a car is connected and drawing power
     * Pending Approval - On when a car is connected and waiting for approval
+    * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
 * Sensors (Charge power) - **These are only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car

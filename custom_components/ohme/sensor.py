@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import charge_graph_next_slot
 
 
@@ -165,7 +165,7 @@ class VoltageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnti
         return None
 
 
-class CTSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity):
     """Sensor for car power draw."""
     _attr_name = "CT Reading"
     _attr_device_class = SensorDeviceClass.CURRENT
@@ -173,7 +173,7 @@ class CTSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
 
     def __init__(
             self,
-            coordinator: OhmeChargeSessionsCoordinator,
+            coordinator: OhmeAdvancedSettingsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)
@@ -215,7 +215,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
 
     def __init__(
             self,
-            coordinator: OhmeChargeSessionsCoordinator,
+            coordinator: OhmeStatisticsCoordinator,
             hass: HomeAssistant,
             client):
         super().__init__(coordinator=coordinator)
@@ -250,7 +250,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
         return None
 
 
-class NextSlotStartSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
+class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for next smart charge slot start time."""
     _attr_name = "Next Charge Slot Start"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
@@ -302,7 +302,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEn
         self.async_write_ha_state()
 
 
-class NextSlotEndSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
+class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for next smart charge slot end time."""
     _attr_name = "Next Charge Slot End"
     _attr_device_class = SensorDeviceClass.TIMESTAMP

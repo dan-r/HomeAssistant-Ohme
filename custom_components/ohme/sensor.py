@@ -32,7 +32,8 @@ async def async_setup_entry(
                CurrentDrawSensor(coordinator, hass, client),
                CTSensor(adv_coordinator, hass, client),
                EnergyUsageSensor(stats_coordinator, hass, client),
-               NextSlotSensor(coordinator, hass, client)]
+               NextSlotEndSensor(coordinator, hass, client),
+               NextSlotStartSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -206,9 +207,9 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
         return None
 
 
-class NextSlotSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
-    """Sensor for next smart charge slot."""
-    _attr_name = "Next Smart Charge Slot"
+class NextSlotStartSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
+    """Sensor for next smart charge slot start time."""
+    _attr_name = "Next Charge Slot Start"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
     def __init__(
@@ -237,6 +238,58 @@ class NextSlotSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity)
     @property
     def icon(self):
         """Icon of the sensor."""
+        return "mdi:clock-star-four-points"
+
+    @property
+    def native_value(self):
+        """Return pre-calculated state."""
+        return self._state
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Calculate next timeslot. This is a bit slow so we only update on coordinator data update."""
+        if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
+            self._state = None
+        else:
+            self._state = charge_graph_next_slot(
+                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])['start']
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()
+
+
+class NextSlotEndSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
+    """Sensor for next smart charge slot end time."""
+    _attr_name = "Next Charge Slot End"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_next_slot_end", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("next_slot_end")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
         return "mdi:clock-star-four-points-outline"
 
     @property
@@ -251,7 +304,7 @@ class NextSlotSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity)
             self._state = None
         else:
             self._state = charge_graph_next_slot(
-                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])['end']
 
         self._last_updated = utcnow()
 

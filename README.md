@@ -42,7 +42,8 @@ This integration exposes the following entities:
     * Current Draw (Amps) - Current draw of connected car
     * CT Reading (Amps) - Reading from attached CT clamp
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
-    * Next Smart Charge Slot - The next time your car will start charging according to the Ohme-generated charge plan
+    * Next Charge Slot Start - The next time your car will start charging according to the Ohme-generated charge plan
+    * Next Charge Slot End - The next time your car will stop charging according to the Ohme-generated charge plan
 * Switches (Settings) - Only options available to your charger model will show
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge
@@ -61,7 +62,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
 * OhmeChargeSessionsCoordinator (30s refresh)
     * Binary Sensors: All
     * Buttons: Approve Charge
-    * Sensors: Power, current and next slot
+    * Sensors: Power, current and next slot (start & end)
     * Switches: Max charge, pause charge
 * OhmeAccountInfoCoordinator (1m refresh)
     * Switches: Lock buttons, require approval and sleep when inactive

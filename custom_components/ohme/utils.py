@@ -17,9 +17,10 @@ def charge_graph_next_slot(charge_start, points):
 
     # Give up if we have less than 3 points
     if len(data) < 3:
-        return None
+        return {"start": None, "end": None}
 
-    next_ts = None
+    start_ts = None
+    end_ts = None
 
     # Loop through every remaining value, skipping the last
     for idx in range(0, len(data) - 1):
@@ -28,13 +29,18 @@ def charge_graph_next_slot(charge_start, points):
 
         # If the next point has a Y delta of 10+, consider this the start of a slot
         # This should be 0+ but I had some strange results in testing... revisit
-        if delta > 10:
+        if delta > 10 and not start_ts:
             # 1s added here as it otherwise often rounds down to xx:59:59
-            next_ts = data[idx]["t"] + 1
+            start_ts = data[idx]["t"] + 1
+        elif start_ts and delta == 0:  # If we have seen a start and see a delta of 0, this is the end
+            end_ts = data[idx]["t"] + 1
             break
 
-    # This needs to be presented with tzinfo or Home Assistant will reject it
-    return None if next_ts is None else datetime.utcfromtimestamp(next_ts).replace(tzinfo=pytz.utc)
+    # These need to be presented with tzinfo or Home Assistant will reject them
+    return {
+        "start": datetime.utcfromtimestamp(start_ts).replace(tzinfo=pytz.utc) if start_ts else None,
+        "end": datetime.utcfromtimestamp(end_ts).replace(tzinfo=pytz.utc) if end_ts else None,
+    }
 
 
 def time_next_occurs(hour, minute):

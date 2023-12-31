@@ -10,10 +10,10 @@ def _format_charge_graph(charge_start, points):
     return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
 
 
-def charge_graph_next_slot(charge_start, points):
+def charge_graph_next_slot(charge_start, points, skip_format=False):
     """Get the next charge slot start/end times from a list of graph points."""
     now = int(time())
-    data = _format_charge_graph(charge_start, points)
+    data = points if skip_format else _format_charge_graph(charge_start, points)
 
     # Filter to points from now onwards
     data = [x for x in data if x["t"] > now]
@@ -47,10 +47,10 @@ def charge_graph_next_slot(charge_start, points):
     }
 
 
-def charge_graph_in_slot(charge_start, points):
+def charge_graph_in_slot(charge_start, points, skip_format=False):
     """Are we currently in a charge slot?"""
     now = int(time())
-    data = _format_charge_graph(charge_start, points)
+    data = points if skip_format else _format_charge_graph(charge_start, points)
 
     # Loop through every value, skipping the last
     for idx in range(0, len(data) - 1):

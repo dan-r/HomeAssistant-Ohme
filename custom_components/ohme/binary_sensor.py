@@ -135,17 +135,17 @@ class ChargingBinarySensor(
         in_charge_slot = charge_graph_in_slot(
             self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
         lr_in_charge_slot = self._last_reading_in_slot
-        lr_power = self._last_reading["power"]["watt"]
         # Store this for next time
         self._last_reading_in_slot = in_charge_slot
 
         # If:
-        # - Power has dropped by 40% since the last reading
+        # - Power has dropped by 40%+ since the last reading
         # - Last reading we were in a charge slot
         # - Now we are not in a charge slot
-        # The charge has stopped but the power reading is lagging.
+        # The charge has JUST stopped on the session bounary but the power reading is lagging.
         # This condition makes sure we get the charge state updated on the tick immediately after charge stop.
-        if lr_power > 0 and power / lr_power < 0.6 and not in_charge_slot and lr_in_charge_slot:
+        lr_power = self._last_reading["power"]["watt"]
+        if lr_in_charge_slot and not in_charge_slot and lr_power > 0 and power / lr_power < 0.6:
             return False
         
         # Failing that, we use the watt hours field to check charge state:

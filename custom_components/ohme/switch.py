@@ -13,7 +13,6 @@ from homeassistant.util.dt import (utcnow)
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator
-from .utils import time_next_occurs
 
 _LOGGER = logging.getLogger(__name__)
 

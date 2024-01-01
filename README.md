@@ -38,7 +38,7 @@ This integration exposes the following entities:
     * Car Charging - On when a car is connected and drawing power
     * Pending Approval - On when a car is connected and waiting for approval
     * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
-* Sensors (Charge power) - **These are only available during a charge session**
+* Sensors (Charge power) - **Only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
     * Voltage (Volts) - Voltage reading
@@ -54,6 +54,9 @@ This integration exposes the following entities:
 * Switches (Charge state) - **These are only functional when a car is connected**
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
+* Inputs - **Only available during a charge session**
+    * Number: Target Percentage - Change the target percentage of the ongoing charge
+    * Time: Target Time - Change the time target for the current charge
 * Buttons
     * Approve Charge - Approves a charge when 'Pending Approval' is on
 
@@ -67,6 +70,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
     * Buttons: Approve Charge
     * Sensors: Power, current, voltage and next slot (start & end)
     * Switches: Max charge, pause charge
+    * Inputs: Target time and target percentage
 * OhmeAccountInfoCoordinator (1m refresh)
     * Switches: Lock buttons, require approval and sleep when inactive
 * OhmeAdvancedSettingsCoordinator (1m refresh)

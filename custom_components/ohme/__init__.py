@@ -44,7 +44,7 @@ async def async_setup_entry(hass, entry):
     hass.data[DOMAIN][DATA_COORDINATORS] = coordinators
 
     # Create tasks for each entity type
-    entity_types = ["sensor", "binary_sensor", "switch", "button", "number"]
+    entity_types = ["sensor", "binary_sensor", "switch", "button", "number", "time"]
     for entity_type in entity_types:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, entity_type)

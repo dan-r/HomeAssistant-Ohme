@@ -118,6 +118,7 @@ class OhmeApiClient:
             data=data,
             headers=self._get_headers()
         ) as resp:
+            _LOGGER.debug(f"POST request to {url}, status code {resp.status}")
             await self._handle_api_error(url, resp)
 
             if skip_json:
@@ -133,6 +134,7 @@ class OhmeApiClient:
             data=json.dumps(data),
             headers=self._get_headers()
         ) as resp:
+            _LOGGER.debug(f"PUT request to {url}, status code {resp.status}")
             await self._handle_api_error(url, resp)
 
             return True
@@ -144,6 +146,7 @@ class OhmeApiClient:
             url,
             headers=self._get_headers()
         ) as resp:
+            _LOGGER.debug(f"GET request to {url}, status code {resp.status}")
             await self._handle_api_error(url, resp)
 
             return await resp.json()
@@ -248,7 +251,7 @@ class OhmeApiClient:
         resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
         
         # If we ever get a reading above 0, assume CT connected
-        if resp['clampAmps'] > 0:
+        if resp['clampAmps'] and resp['clampAmps'] > 0:
             self._ct_connected = True
 
         return resp['clampAmps']

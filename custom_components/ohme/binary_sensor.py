@@ -124,21 +124,17 @@ class ChargingBinarySensor(
 
     def _calculate_state(self) -> bool:
         """Some trickery to get the charge state to update quickly."""
-        bsoc = self.coordinator.data['batterySoc']        
         power = self.coordinator.data["power"]["watt"]
 
         # If no last reading or no batterySoc, fallback to power > 0
         if not self._last_reading or not self._last_reading['batterySoc']:
-            return self.coordinator.data["power"]["watt"] > 0
+            return power > 0
         
         # If Wh has positive delta and a nonzero power reading, we are charging
         # This isn't ideal - eg. quirk of MG ZS in #13, so need to revisit
-        lr_bsoc = self._last_reading['batterySoc']
-        delta = bsoc['wh'] - lr_bsoc['wh']
-        if delta > 0 and power > 0:
-            return True
+        delta = self.coordinator.data['batterySoc']['wh'] - self._last_reading['batterySoc']['wh']
         
-        return False
+        return delta > 0 and power > 0
 
     @callback
     def _handle_coordinator_update(self) -> None:

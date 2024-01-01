@@ -103,9 +103,6 @@ class ChargingBinarySensor(
         self._last_reading = None
         self._last_reading_in_slot = False
 
-        # Allow a state override
-        self._override_until = None
-
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_charging", hass=hass)
 
@@ -128,50 +125,35 @@ class ChargingBinarySensor(
 
     def _calculate_state(self) -> bool:
         """Some trickery to get the charge state to update quickly."""
-        # If we have overriden the state, return the current value until that time
-        if self._override_until and time() < self._override_until:
-            _LOGGER.debug("State overridden to False for 310s")
-            return self._state
-
-        # We have passed override check, reset it
-        self._override_until = None
-
         power = self.coordinator.data["power"]["watt"]
 
-        # No last reading to go off, use power draw based state only - this lags
-        if not self._last_reading:
-            _LOGGER.debug("Last reading not found, default to power > 0")
+        # If no last reading or no batterySoc/power, fallback to power > 0
+        if not self._last_reading or not self._last_reading['batterySoc'] or not self._last_reading['power']:
             return power > 0
-
-        # Get power from last reading
-        lr_power = self._last_reading["power"]["watt"]
-
+        
         # See if we are in a charge slot now and if we were for the last reading
         in_charge_slot = charge_graph_in_slot(
             self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
         lr_in_charge_slot = self._last_reading_in_slot
-
         # Store this for next time
         self._last_reading_in_slot = in_charge_slot
 
         # If:
-        # - Power has dropped by 40% since the last reading
+        # - Power has dropped by 40%+ since the last reading
         # - Last reading we were in a charge slot
         # - Now we are not in a charge slot
-        # The charge has stopped but the power reading is lagging.
-        if lr_power > 0 and power / lr_power < 0.6 and not in_charge_slot and lr_in_charge_slot:
-            _LOGGER.debug("Charge stop behaviour seen - overriding to False for 310 seconds")
-            self._override_until = time() + 310  # Override for 5 mins (and a bit)
+        # The charge has JUST stopped on the session bounary but the power reading is lagging.
+        # This condition makes sure we get the charge state updated on the tick immediately after charge stop.
+        lr_power = self._last_reading["power"]["watt"]
+        if lr_in_charge_slot and not in_charge_slot and lr_power > 0 and power / lr_power < 0.6:
             return False
-
-        # Its possible that this is the 'transitionary' reading - slots updated but not power
-        # Override _last_reading_in_slot and see what happens next time around
-        elif lr_power > 0 and not in_charge_slot and lr_in_charge_slot:
-            _LOGGER.debug("Possible transitionary reading. Treating as slot boundary in next tick.")
-            self._last_reading_in_slot = True
-
-        # Fallback to the old way
-        return power > 0
+        
+        # Failing that, we use the watt hours field to check charge state:
+        # - If Wh has positive delta and a nonzero power reading, we are charging
+        # This isn't ideal - eg. quirk of MG ZS in #13, so need to revisit
+        wh_delta = self.coordinator.data['batterySoc']['wh'] - self._last_reading['batterySoc']['wh']
+        
+        return wh_delta > 0 and power > 0
 
     @callback
     def _handle_coordinator_update(self) -> None:

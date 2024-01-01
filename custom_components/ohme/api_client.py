@@ -5,6 +5,7 @@ from time import time
 from datetime import datetime, timedelta
 from homeassistant.helpers.entity import DeviceInfo
 from .const import DOMAIN
+from .utils import time_next_occurs
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,6 +36,9 @@ class OhmeApiClient:
         # User info
         self._user_id = ""
         self._serial = ""
+
+        # Cache the last rule to use when we disable max charge or change schedule
+        self._last_rule = {}
 
         # Sessions
         self._session = aiohttp.ClientSession(
@@ -156,7 +160,7 @@ class OhmeApiClient:
     def ct_connected(self):
         """Is CT clamp connected."""
         return self._ct_connected
-    
+
     def is_capable(self, capability):
         """Return whether or not this model has a given capability."""
         return bool(self._capabilities[capability])
@@ -189,9 +193,33 @@ class OhmeApiClient:
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
         return bool(result)
 
-    async def async_apply_charge_rule(self, max_price=False, target_ts=0, target_percent=100, pre_condition=False, pre_condition_length=0):
+    async def async_apply_charge_rule(self, max_price=None, target_time=None, target_percent=None, pre_condition=None, pre_condition_length=None):
         """Apply charge rule/stop max charge."""
+        # Check every property. If we've provided it, use that. If not, use the existing.
+        if max_price is None:
+            max_price = self._last_rule['settings'][0]['enabled'] if 'settings' in self._last_rule and len(
+                self._last_rule['settings']) > 1 else False
 
+        if target_percent is None:
+            target_percent = self._last_rule['targetPercent'] if 'targetPercent' in self._last_rule else 80
+
+        if pre_condition is None:
+            pre_condition = self._last_rule['preconditioningEnabled'] if 'preconditioningEnabled' in self._last_rule else False
+
+        if pre_condition_length is None:
+            pre_condition_length = self._last_rule[
+                'preconditionLengthMins'] if 'preconditionLengthMins' in self._last_rule else 30
+
+        if target_time is None:
+            # Default to 9am
+            target_time = self._last_rule['targetTime'] if 'targetTime' in self._last_rule else 32400
+            target_time = (target_time // 3600,
+                           (target_time % 3600) // 60)
+
+        target_ts = int(time_next_occurs(
+            target_time[0], target_time[1]).timestamp() * 1000)
+
+        # Convert these to string form
         max_price = 'true' if max_price else 'false'
         pre_condition = 'true' if pre_condition else 'false'
 
@@ -209,8 +237,13 @@ class OhmeApiClient:
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
         resp = await self._get_request('/v1/chargeSessions')
+        resp = resp[0]
 
-        return resp[0]
+        # Cache the current rule if we are given it
+        if resp["mode"] == "SMART_CHARGE" and 'appliedRule' in resp:
+            self._last_rule = resp["appliedRule"]
+
+        return resp
 
     async def async_get_account_info(self):
         resp = await self._get_request('/v1/users/me/account')
@@ -249,7 +282,7 @@ class OhmeApiClient:
     async def async_get_ct_reading(self):
         """Get CT clamp reading."""
         resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
-        
+
         # If we ever get a reading above 0, assume CT connected
         if resp['clampAmps'] and resp['clampAmps'] > 0:
             self._ct_connected = True

@@ -13,7 +13,6 @@ from homeassistant.util.dt import (utcnow)
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator
-from .utils import time_next_occurs
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -122,9 +121,6 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
         self._last_updated = None
         self._attributes = {}
 
-        # Cache the last rule to use when we disable max charge
-        self._last_rule = {}
-
         self.entity_id = generate_entity_id(
             "switch.{}", "ohme_max_charge", hass=hass)
 
@@ -149,10 +145,6 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
             self._attr_is_on = bool(
                 self.coordinator.data["mode"] == "MAX_CHARGE")
 
-            # Cache the current rule if we are given it
-            if self.coordinator.data["mode"] == "SMART_CHARGE" and 'appliedRule' in self.coordinator.data:
-                self._last_rule = self.coordinator.data["appliedRule"]
-
         self._last_updated = utcnow()
 
         self.async_write_ha_state()
@@ -168,41 +160,8 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
 
     async def async_turn_off(self):
         """Stop max charging.
-           We have to provide a full rule to disable max charge, so we try to get as much as possible
-           from the cached rule, and assume sane defaults if that isn't possible."""
-
-        max_price = False
-        target_ts = 0
-        target_percent = 80
-        pre_condition = False,
-        pre_condition_length = 0
-
-        if self._last_rule and 'targetTime' in self._last_rule:
-            # Convert rule time (seconds from 00:00 to time) to hh:mm
-            # and find when it next occurs.
-            next_dt = time_next_occurs(
-                self._last_rule['targetTime'] // 3600,
-                (self._last_rule['targetTime'] % 3600) // 60
-            )
-            target_ts = int(next_dt.timestamp() * 1000)
-        else:
-            next_dt = time_next_occurs(9, 0)
-            target_ts = int(next_dt.timestamp() * 1000)
-
-        if self._last_rule:
-            max_price = self._last_rule['settings'][0]['enabled'] if 'settings' in self._last_rule and len(
-                self._last_rule['settings']) > 1 else max_price
-            target_percent = self._last_rule['targetPercent'] if 'targetPercent' in self._last_rule else target_percent
-            pre_condition = self._last_rule['preconditioningEnabled'] if 'preconditioningEnabled' in self._last_rule else pre_condition
-            pre_condition_length = self._last_rule['preconditionLengthMins'] if 'preconditionLengthMins' in self._last_rule else pre_condition_length
-
-        await self._client.async_apply_charge_rule(
-            max_price=max_price,
-            target_ts=target_ts,
-            target_percent=target_percent,
-            pre_condition=pre_condition,
-            pre_condition_length=pre_condition_length
-        )
+           We are not changing anything, just applying the last rule. No need to supply anything."""
+        await self._client.async_apply_charge_rule()
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

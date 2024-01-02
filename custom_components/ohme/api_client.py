@@ -4,7 +4,7 @@ import json
 from time import time
 from datetime import datetime, timedelta
 from homeassistant.helpers.entity import DeviceInfo
-from .const import DOMAIN
+from .const import DOMAIN, USER_AGENT, INTEGRATION_VERSION
 from .utils import time_next_occurs
 
 _LOGGER = logging.getLogger(__name__)
@@ -111,7 +111,8 @@ class OhmeApiClient:
         """Get auth and content-type headers"""
         return {
             "Authorization": "Firebase %s" % self._token,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": f"{USER_AGENT}/{INTEGRATION_VERSION}"
         }
 
     async def _post_request(self, url, skip_json=False, data=None):

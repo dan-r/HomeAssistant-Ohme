@@ -35,7 +35,7 @@ class TargetTime(TimeEntity):
 
         self._client = client
 
-        self._state = 0
+        self._state = None
         self._last_updated = None
         self._attributes = {}
 
@@ -64,11 +64,12 @@ class TargetTime(TimeEntity):
     @property
     def native_value(self):
         """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['appliedRule']:
+        # Make sure we're not pending approval, as this sets the target time to now
+        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL":
             target = self.coordinator.data['appliedRule']['targetTime']
-            return dt_time(
+            self._state = dt_time(
                 hour=target // 3600,
                 minute=(target % 3600) // 60,
                 second=0
             )
-        return None
+        return self._state

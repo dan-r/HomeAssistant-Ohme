@@ -195,7 +195,7 @@ class OhmeApiClient:
         return bool(result)
 
     async def async_apply_charge_rule(self, max_price=None, target_time=None, target_percent=None, pre_condition=None, pre_condition_length=None):
-        """Apply charge rule/stop max charge."""
+        """Apply rule to ongoing charge/stop max charge."""
         # Check every property. If we've provided it, use that. If not, use the existing.
         if max_price is None:
             max_price = self._last_rule['settings'][0]['enabled'] if 'settings' in self._last_rule and len(
@@ -226,6 +226,29 @@ class OhmeApiClient:
 
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
         return bool(result)
+    
+    async def async_get_schedule(self):
+        """Get the first schedule."""
+        schedules = await self._get_request("/v1/chargeRules")
+
+        return schedules[0] if len(schedules) > 0 else None
+
+    async def async_update_schedule(self, target_percent=None, target_time=None):
+        """Update the first listed schedule."""
+        rule = await self.async_get_schedule()
+
+        # Account for user having no rules
+        if not rule:
+            return None
+
+        # Update percent and time if provided
+        if target_percent is not None:
+            rule['targetPercent'] = target_percent
+        if target_time is not None:
+            rule['targetTime'] = (target_time[0] * 3600) + (target_time[1] * 60)
+
+        await self._put_request(f"/v1/chargeRules/{rule['id']}", data=rule)
+        return True
 
     async def async_set_configuration_value(self, values):
         """Set a configuration value or values."""

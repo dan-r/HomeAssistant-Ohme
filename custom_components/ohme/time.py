@@ -4,7 +4,7 @@ import logging
 from homeassistant.components.time import TimeEntity
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
 from datetime import time as dt_time
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,10 +18,10 @@ async def async_setup_entry(
     """Setup switches and configure coordinator."""
     coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
 
-    coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     client = hass.data[DOMAIN][DATA_CLIENT]
 
-    numbers = [TargetTime(coordinator, hass, client)]
+    numbers = [TargetTime(coordinators[COORDINATOR_CHARGESESSIONS],
+                          coordinators[COORDINATOR_SCHEDULES], hass, client)]
 
     async_add_entities(numbers, update_before_add=True)
 
@@ -30,8 +30,9 @@ class TargetTime(TimeEntity):
     """Target time sensor."""
     _attr_name = "Target Time"
 
-    def __init__(self, coordinator, hass: HomeAssistant, client):
+    def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
         self.coordinator = coordinator
+        self.coordinator_schedules = coordinator_schedules
 
         self._client = client
 
@@ -51,10 +52,17 @@ class TargetTime(TimeEntity):
 
     async def async_set_value(self, value: dt_time) -> None:
         """Update the current value."""
-        await self._client.async_apply_charge_rule(target_time=(int(value.hour), int(value.minute)))
+        # If disconnected, update top rule. If not, apply rule to current session
+        if self.coordinator.data and self.coordinator.data['mode'] == "DISCONNECTED":
+            await self._client.async_update_schedule(target_time=(int(value.hour), int(value.minute)))
+            await asyncio.sleep(1)
+            await self.coordinator_schedules.async_refresh()
+        else:
+            await self._client.async_apply_charge_rule(target_time=(int(value.hour), int(value.minute)))
+            await asyncio.sleep(1)
+            await self.coordinator.async_refresh()
 
-        await asyncio.sleep(1)
-        await self.coordinator.async_refresh()
+        
 
     @property
     def icon(self):
@@ -64,9 +72,14 @@ class TargetTime(TimeEntity):
     @property
     def native_value(self):
         """Get value from data returned from API by coordinator"""
-        # Make sure we're not pending approval, as this sets the target time to now
-        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL":
+        # If we are not pending approval or disconnected, return in progress charge rule
+        target = None
+        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL" and self.coordinator.data['mode'] != "DISCONNECTED":
             target = self.coordinator.data['appliedRule']['targetTime']
+        elif self.coordinator_schedules.data:
+            target = self.coordinator_schedules.data['targetTime']
+        
+        if target:
             self._state = dt_time(
                 hour=target // 3600,
                 minute=(target % 3600) // 60,

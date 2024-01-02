@@ -97,3 +97,25 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
 
         except BaseException:
             raise UpdateFailed("Error communicating with API")
+
+class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
+    """Coordinator to pull charge schedules."""
+
+    def __init__(self, hass):
+        """Initialise coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="Ohme Charge Schedules",
+            update_interval=timedelta(minutes=10),
+        )
+        self._client = hass.data[DOMAIN][DATA_CLIENT]
+
+    async def _async_update_data(self):
+        """Fetch data from API endpoint."""
+        try:
+            return await self._client.async_get_schedule()
+
+        except BaseException:
+            raise UpdateFailed("Error communicating with API")
+

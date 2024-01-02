@@ -188,9 +188,9 @@ class ChargingBinarySensor(
     @callback
     def _handle_coordinator_update(self) -> None:
         """Update data."""
-        # Don't accept updates if 20s hasnt passed
+        # Don't accept updates if 5s hasnt passed
         # State calculations use deltas that may be unreliable to check if requests are too often
-        if self._last_updated and (utcnow().timestamp() - self._last_updated.timestamp() < 20):
+        if self._last_updated and (utcnow().timestamp() - self._last_updated.timestamp() < 5):
             _LOGGER.debug("ChargingBinarySensor: State update too soon - suppressing")
             return
 

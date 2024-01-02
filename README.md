@@ -54,9 +54,9 @@ This integration exposes the following entities:
 * Switches (Charge state) - **These are only functional when a car is connected**
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
-* Inputs - **Only available during a charge session**
-    * Number: Target Percentage - Change the target percentage of the ongoing charge
-    * Time: Target Time - Change the time target for the current charge
+* Inputs - **If in a charge session, this will change the active charge. If disconnected, this will change your first schedule.**
+    * Number: Target Percentage - Change the target battery percentage
+    * Time: Target Time - Change the target time
 * Buttons
     * Approve Charge - Approves a charge when 'Pending Approval' is on
 

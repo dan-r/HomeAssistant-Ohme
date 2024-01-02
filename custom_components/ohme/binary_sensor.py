@@ -12,7 +12,6 @@ from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, DATA_CLIENT
 from .coordinator import OhmeChargeSessionsCoordinator
 from .utils import charge_graph_in_slot
-from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,6 +102,9 @@ class ChargingBinarySensor(
         self._last_reading = None
         self._last_reading_in_slot = False
 
+        # State variables for charge state detection
+        self._trigger_count = 0
+
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_charging", hass=hass)
 
@@ -129,6 +131,7 @@ class ChargingBinarySensor(
 
         # If no last reading or no batterySoc/power, fallback to power > 0
         if not self._last_reading or not self._last_reading['batterySoc'] or not self._last_reading['power']:
+            _LOGGER.debug("ChargingBinarySensor: No last reading, defaulting to power > 0")
             return power > 0
         
         # See if we are in a charge slot now and if we were for the last reading
@@ -146,23 +149,57 @@ class ChargingBinarySensor(
         # This condition makes sure we get the charge state updated on the tick immediately after charge stop.
         lr_power = self._last_reading["power"]["watt"]
         if lr_in_charge_slot and not in_charge_slot and lr_power > 0 and power / lr_power < 0.6:
+            _LOGGER.debug("ChargingBinarySensor: Power drop on state boundary, assuming not charging")
+            self._trigger_count = 0
             return False
         
         # Failing that, we use the watt hours field to check charge state:
-        # - If Wh has positive delta and a nonzero power reading, we are charging
-        # This isn't ideal - eg. quirk of MG ZS in #13, so need to revisit
+        # - If Wh has positive delta
+        # - We have a nonzero power reading
+        # We are charging. Using the power reading isn't ideal - eg. quirk of MG ZS in #13, so need to revisit
         wh_delta = self.coordinator.data['batterySoc']['wh'] - self._last_reading['batterySoc']['wh']
-        
-        return wh_delta > 0 and power > 0
+        trigger_state = wh_delta > 0 and power > 0
+
+        _LOGGER.debug(f"ChargingBinarySensor: Reading Wh delta of {wh_delta} and power of {power}w")
+
+        # If state is going upwards, report straight away
+        if trigger_state and not self._state:
+            _LOGGER.debug("ChargingBinarySensor: Upwards state change, reporting immediately")
+            self._trigger_count = 0
+            return True
+
+        # If state is going to change (downwards only for now), we want to see 2 consecutive readings of the state having
+        # changed before reporting it.
+        if self._state != trigger_state:
+            _LOGGER.debug("ChargingBinarySensor: Downwards state change, incrementing counter")
+            self._trigger_count += 1
+            if self._trigger_count > 1:
+                _LOGGER.debug("ChargingBinarySensor: Counter hit, publishing downward state change")
+                self._trigger_count = 0
+                return trigger_state
+        else:
+            self._trigger_count = 0
+
+        _LOGGER.debug("ChargingBinarySensor: Returning existing state")
+            
+        # State hasn't changed or we haven't seen 2 changed values - return existing state
+        return self._state
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Update data."""
+        # Don't accept updates if 20s hasnt passed
+        # State calculations use deltas that may be unreliable to check if requests are too often
+        if self._last_updated and (utcnow().timestamp() - self._last_updated.timestamp() < 20):
+            _LOGGER.debug("ChargingBinarySensor: State update too soon - suppressing")
+            return
+
         # If we have power info and the car is plugged in, calculate state. Otherwise, false
         if self.coordinator.data and self.coordinator.data["power"] and self.coordinator.data['mode'] != "DISCONNECTED":
             self._state = self._calculate_state()
         else:
             self._state = False
+            _LOGGER.debug("ChargingBinarySensor: No power data or car disconnected - reporting False")
 
         self._last_reading = self.coordinator.data
         self._last_updated = utcnow()

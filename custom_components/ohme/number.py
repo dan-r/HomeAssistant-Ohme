@@ -3,7 +3,7 @@ import asyncio
 from homeassistant.components.number import NumberEntity, NumberDeviceClass
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
 
 
 async def async_setup_entry(
@@ -14,10 +14,10 @@ async def async_setup_entry(
     """Setup switches and configure coordinator."""
     coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
 
-    coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     client = hass.data[DOMAIN][DATA_CLIENT]
 
-    numbers = [TargetPercentNumber(coordinator, hass, client)]
+    numbers = [TargetPercentNumber(
+        coordinators[COORDINATOR_CHARGESESSIONS], coordinators[COORDINATOR_SCHEDULES], hass, client)]
 
     async_add_entities(numbers, update_before_add=True)
 
@@ -28,12 +28,13 @@ class TargetPercentNumber(NumberEntity):
     _attr_device_class = NumberDeviceClass.BATTERY
     _attr_suggested_display_precision = 0
 
-    def __init__(self, coordinator, hass: HomeAssistant, client):
+    def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
         self.coordinator = coordinator
+        self.coordinator_schedules = coordinator_schedules
 
         self._client = client
 
-        self._state = 0
+        self._state = None
         self._last_updated = None
         self._attributes = {}
 
@@ -49,10 +50,15 @@ class TargetPercentNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        await self._client.async_apply_charge_rule(target_percent=int(value))
-
-        await asyncio.sleep(1)
-        await self.coordinator.async_refresh()
+        # If disconnected, update top rule. If not, apply rule to current session
+        if self.coordinator.data and self.coordinator.data['mode'] == "DISCONNECTED":
+            await self._client.async_update_schedule(target_percent=int(value))
+            await asyncio.sleep(1)
+            await self.coordinator_schedules.async_refresh()
+        else:
+            await self._client.async_apply_charge_rule(target_percent=int(value))
+            await asyncio.sleep(1)
+            await self.coordinator.async_refresh()
 
     @property
     def icon(self):
@@ -62,13 +68,11 @@ class TargetPercentNumber(NumberEntity):
     @property
     def native_value(self):
         """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['appliedRule']:
+        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL" and self.coordinator.data['mode'] != "DISCONNECTED":
             target = round(
                 self.coordinator.data['appliedRule']['targetPercent'])
+        elif self.coordinator_schedules.data:
+            target = round(self.coordinator_schedules.data['targetPercent'])
 
-            if target == 0:
-                return self._state
-
-            self._state = target
-            return self._state
-        return None
+        self._state = target if target > 0 else None
+        return self._state

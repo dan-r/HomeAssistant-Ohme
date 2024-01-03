@@ -194,7 +194,7 @@ class OhmeApiClient:
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
         return bool(result)
 
-    async def async_apply_charge_rule(self, max_price=None, target_time=None, target_percent=None, pre_condition=None, pre_condition_length=None):
+    async def async_apply_session_rule(self, max_price=None, target_time=None, target_percent=None, pre_condition=None, pre_condition_length=None):
         """Apply rule to ongoing charge/stop max charge."""
         # Check every property. If we've provided it, use that. If not, use the existing.
         if max_price is None:

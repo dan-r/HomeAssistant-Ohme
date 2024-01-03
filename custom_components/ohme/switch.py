@@ -161,7 +161,7 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
     async def async_turn_off(self):
         """Stop max charging.
            We are not changing anything, just applying the last rule. No need to supply anything."""
-        await self._client.async_apply_charge_rule()
+        await self._client.async_apply_session_rule()
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

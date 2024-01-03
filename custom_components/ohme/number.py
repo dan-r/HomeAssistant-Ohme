@@ -4,7 +4,7 @@ from homeassistant.components.number import NumberEntity, NumberDeviceClass
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
-
+from .utils import session_in_progress
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -50,15 +50,15 @@ class TargetPercentNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        # If disconnected, update top rule. If not, apply rule to current session
-        if self.coordinator.data and self.coordinator.data['mode'] == "DISCONNECTED":
+        # If session in progress, update this session, if not update the first schedule
+        if session_in_progress(self.coordinator.data):
+            await self._client.async_apply_session_rule(target_percent=int(value))
+            await asyncio.sleep(1)
+            await self.coordinator.async_refresh()
+        else:
             await self._client.async_update_schedule(target_percent=int(value))
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
-        else:
-            await self._client.async_apply_charge_rule(target_percent=int(value))
-            await asyncio.sleep(1)
-            await self.coordinator.async_refresh()
 
     @property
     def icon(self):
@@ -68,9 +68,9 @@ class TargetPercentNumber(NumberEntity):
     @property
     def native_value(self):
         """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL" and self.coordinator.data['mode'] != "DISCONNECTED":
-            target = round(
-                self.coordinator.data['appliedRule']['targetPercent'])
+        # Set with the same logic as reading
+        if session_in_progress(self.coordinator.data):
+            target = round(self.coordinator.data['appliedRule']['targetPercent'])
         elif self.coordinator_schedules.data:
             target = round(self.coordinator_schedules.data['targetPercent'])
 

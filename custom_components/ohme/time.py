@@ -5,6 +5,7 @@ from homeassistant.components.time import TimeEntity
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
+from .utils import session_in_progress
 from datetime import time as dt_time
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,17 +53,15 @@ class TargetTime(TimeEntity):
 
     async def async_set_value(self, value: dt_time) -> None:
         """Update the current value."""
-        # If disconnected, update top rule. If not, apply rule to current session
-        if self.coordinator.data and self.coordinator.data['mode'] == "DISCONNECTED":
+        # If session in progress, update this session, if not update the first schedule
+        if session_in_progress(self.coordinator.data):
+            await self._client.async_apply_session_rule(target_time=(int(value.hour), int(value.minute)))
+            await asyncio.sleep(1)
+            await self.coordinator.async_refresh()
+        else:
             await self._client.async_update_schedule(target_time=(int(value.hour), int(value.minute)))
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
-        else:
-            await self._client.async_apply_charge_rule(target_time=(int(value.hour), int(value.minute)))
-            await asyncio.sleep(1)
-            await self.coordinator.async_refresh()
-
-        
 
     @property
     def icon(self):
@@ -72,9 +71,9 @@ class TargetTime(TimeEntity):
     @property
     def native_value(self):
         """Get value from data returned from API by coordinator"""
-        # If we are not pending approval or disconnected, return in progress charge rule
+        # Set with the same logic as reading
         target = None
-        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL" and self.coordinator.data['mode'] != "DISCONNECTED":
+        if session_in_progress(self.coordinator.data):
             target = self.coordinator.data['appliedRule']['targetTime']
         elif self.coordinator_schedules.data:
             target = self.coordinator_schedules.data['targetTime']

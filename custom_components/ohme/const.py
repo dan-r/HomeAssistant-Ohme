@@ -1,13 +1,7 @@
 """Component constants"""
-import voluptuous as vol
-
 DOMAIN = "ohme"
 USER_AGENT = "dan-r-homeassistant-ohme"
 INTEGRATION_VERSION = "0.2.8"
-CONFIG_SCHEMA = vol.Schema({
-    vol.Required("email"): str,
-    vol.Required("password"): str
-})
 
 DATA_CLIENT = "client"
 DATA_COORDINATORS = "coordinators"

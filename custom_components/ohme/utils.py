@@ -73,3 +73,16 @@ def time_next_occurs(hour, minute):
         target = target + timedelta(days=1)
 
     return target
+
+def session_in_progress(data):
+    """Is there a session in progress?
+       Used to check if we should update the current session rather than the first schedule."""
+    # Default to False with no data
+    if not data:
+        return False
+    
+    # Car disconnected or pending approval, we should update the schedule
+    if data['mode'] == "DISCONNECTED" or data['mode'] == "PENDING_APPROVAL":
+        return False
+    
+    return True

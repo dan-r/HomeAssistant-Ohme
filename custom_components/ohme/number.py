@@ -4,7 +4,7 @@ from homeassistant.components.number import NumberEntity, NumberDeviceClass
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
-
+from .utils import session_in_progress
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -43,6 +43,20 @@ class TargetPercentNumber(NumberEntity):
 
         self._attr_device_info = client.get_device_info()
 
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                self._handle_coordinator_update, None
+            )
+        )
+        self.async_on_remove(
+            self.coordinator_schedules.async_add_listener(
+                self._handle_coordinator_update, None
+            )
+        )
+        
     @property
     def unique_id(self):
         """The unique ID of the switch."""
@@ -50,29 +64,32 @@ class TargetPercentNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        # If disconnected, update top rule. If not, apply rule to current session
-        if self.coordinator.data and self.coordinator.data['mode'] == "DISCONNECTED":
+        # If session in progress, update this session, if not update the first schedule
+        if session_in_progress(self.coordinator.data):
+            await self._client.async_apply_session_rule(target_percent=int(value))
+            await asyncio.sleep(1)
+            await self.coordinator.async_refresh()
+        else:
             await self._client.async_update_schedule(target_percent=int(value))
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
-        else:
-            await self._client.async_apply_charge_rule(target_percent=int(value))
-            await asyncio.sleep(1)
-            await self.coordinator.async_refresh()
 
     @property
     def icon(self):
         """Icon of the sensor."""
         return "mdi:battery-heart"
 
-    @property
-    def native_value(self):
+    @callback
+    def _handle_coordinator_update(self) -> None:
         """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['appliedRule'] and self.coordinator.data['mode'] != "PENDING_APPROVAL" and self.coordinator.data['mode'] != "DISCONNECTED":
-            target = round(
-                self.coordinator.data['appliedRule']['targetPercent'])
+        # Set with the same logic as reading
+        if session_in_progress(self.coordinator.data):
+            target = round(self.coordinator.data['appliedRule']['targetPercent'])
         elif self.coordinator_schedules.data:
             target = round(self.coordinator_schedules.data['targetPercent'])
 
         self._state = target if target > 0 else None
+
+    @property
+    def native_value(self):
         return self._state

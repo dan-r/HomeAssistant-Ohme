@@ -43,6 +43,20 @@ class TargetPercentNumber(NumberEntity):
 
         self._attr_device_info = client.get_device_info()
 
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                self._handle_coordinator_update, None
+            )
+        )
+        self.async_on_remove(
+            self.coordinator_schedules.async_add_listener(
+                self._handle_coordinator_update, None
+            )
+        )
+        
     @property
     def unique_id(self):
         """The unique ID of the switch."""
@@ -65,8 +79,8 @@ class TargetPercentNumber(NumberEntity):
         """Icon of the sensor."""
         return "mdi:battery-heart"
 
-    @property
-    def native_value(self):
+    @callback
+    def _handle_coordinator_update(self) -> None:
         """Get value from data returned from API by coordinator"""
         # Set with the same logic as reading
         if session_in_progress(self.coordinator.data):
@@ -75,4 +89,7 @@ class TargetPercentNumber(NumberEntity):
             target = round(self.coordinator_schedules.data['targetPercent'])
 
         self._state = target if target > 0 else None
+
+    @property
+    def native_value(self):
         return self._state

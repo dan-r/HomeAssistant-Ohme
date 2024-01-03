@@ -45,6 +45,20 @@ class TargetTime(TimeEntity):
             "number.{}", "ohme_target_time", hass=hass)
 
         self._attr_device_info = client.get_device_info()
+    
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.coordinator.async_add_listener(
+                self._handle_coordinator_update, None
+            )
+        )
+        self.async_on_remove(
+            self.coordinator_schedules.async_add_listener(
+                self._handle_coordinator_update, None
+            )
+        )
 
     @property
     def unique_id(self):
@@ -68,10 +82,10 @@ class TargetTime(TimeEntity):
         """Icon of the sensor."""
         return "mdi:alarm-check"
 
-    @property
-    def native_value(self):
+    @callback
+    def _handle_coordinator_update(self) -> None:
         """Get value from data returned from API by coordinator"""
-        # Set with the same logic as reading
+        # Read with the same logic as setting
         target = None
         if session_in_progress(self.coordinator.data):
             target = self.coordinator.data['appliedRule']['targetTime']
@@ -84,4 +98,8 @@ class TargetTime(TimeEntity):
                 minute=(target % 3600) // 60,
                 second=0
             )
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self):
         return self._state

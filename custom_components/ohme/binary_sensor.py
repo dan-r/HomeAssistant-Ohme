@@ -168,12 +168,12 @@ class ChargingBinarySensor(
             self._trigger_count = 0
             return True
 
-        # If state is going to change (downwards only for now), we want to see 2 consecutive readings of the state having
+        # If state is going to change (downwards only for now), we want to see 3 consecutive readings of the state having
         # changed before reporting it.
         if self._state != trigger_state:
             _LOGGER.debug("ChargingBinarySensor: Downwards state change, incrementing counter")
             self._trigger_count += 1
-            if self._trigger_count > 1:
+            if self._trigger_count > 2:
                 _LOGGER.debug("ChargingBinarySensor: Counter hit, publishing downward state change")
                 self._trigger_count = 0
                 return trigger_state
@@ -182,7 +182,7 @@ class ChargingBinarySensor(
 
         _LOGGER.debug("ChargingBinarySensor: Returning existing state")
             
-        # State hasn't changed or we haven't seen 2 changed values - return existing state
+        # State hasn't changed or we haven't seen 3 changed values - return existing state
         return self._state
 
     @callback

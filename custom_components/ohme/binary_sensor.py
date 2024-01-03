@@ -9,8 +9,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, DATA_CLIENT
-from .coordinator import OhmeChargeSessionsCoordinator
+from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED, DATA_CLIENT
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import charge_graph_in_slot
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,11 +23,13 @@ async def async_setup_entry(
     """Setup sensors and configure coordinator."""
     client = hass.data[DOMAIN][DATA_CLIENT]
     coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    coordinator_advanced = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_ADVANCED]
 
     sensors = [ConnectedBinarySensor(coordinator, hass, client),
                ChargingBinarySensor(coordinator, hass, client),
                PendingApprovalBinarySensor(coordinator, hass, client),
-               CurrentSlotBinarySensor(coordinator, hass, client)]
+               CurrentSlotBinarySensor(coordinator, hass, client),
+               ChargerOnlineBinarySensor(coordinator_advanced, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -168,12 +170,12 @@ class ChargingBinarySensor(
             self._trigger_count = 0
             return True
 
-        # If state is going to change (downwards only for now), we want to see 2 consecutive readings of the state having
+        # If state is going to change (downwards only for now), we want to see 3 consecutive readings of the state having
         # changed before reporting it.
         if self._state != trigger_state:
             _LOGGER.debug("ChargingBinarySensor: Downwards state change, incrementing counter")
             self._trigger_count += 1
-            if self._trigger_count > 1:
+            if self._trigger_count > 2:
                 _LOGGER.debug("ChargingBinarySensor: Counter hit, publishing downward state change")
                 self._trigger_count = 0
                 return trigger_state
@@ -182,7 +184,7 @@ class ChargingBinarySensor(
 
         _LOGGER.debug("ChargingBinarySensor: Returning existing state")
             
-        # State hasn't changed or we haven't seen 2 changed values - return existing state
+        # State hasn't changed or we haven't seen 3 changed values - return existing state
         return self._state
 
     @callback
@@ -306,3 +308,47 @@ class CurrentSlotBinarySensor(
         self._last_updated = utcnow()
 
         self.async_write_ha_state()
+
+class ChargerOnlineBinarySensor(
+        CoordinatorEntity[OhmeAdvancedSettingsCoordinator],
+        BinarySensorEntity):
+    """Binary sensor for if charger is online."""
+
+    _attr_name = "Charger Online"
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+
+    def __init__(
+            self,
+            coordinator: OhmeAdvancedSettingsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._attributes = {}
+        self._last_updated = None
+        self._state = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "binary_sensor.{}", "ohme_charger_online", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:web"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("charger_online")
+
+    @property
+    def is_on(self) -> bool:
+        if self.coordinator.data and self.coordinator.data["online"]:
+            return True
+        elif self.coordinator.data:
+            return False
+        return None

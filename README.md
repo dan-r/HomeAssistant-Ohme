@@ -5,9 +5,10 @@ A basic integration for interacting with Ohme EV Chargers.
 This is an unofficial integration. I have no affiliation with Ohme besides owning one of their EV chargers.
 
 This integration does not currently support social login or accounts with multiple chargers. It has been tested with the following hardware:
-* Ohme Home Pro [UK]
-* Ohme Home/Go [UK]
-* Ohme ePod [UK]
+* Ohme Home Pro [v1.32]
+* Ohme Home [v1.32]
+* Ohme Go [v1.32]
+* Ohme ePod [v2.12]
 
 If you find any bugs or would like to request a feature, please open an issue.
 
@@ -27,7 +28,9 @@ This is the recommended installation method.
 
 
 ## Setup
-From the Home Assistant Integrations page, search for an add the Ohme integration. If you created your Ohme account through a social login, you will need to 'reset your password' to use this integration.
+From the Home Assistant Integrations page, search for and add the Ohme integration.
+
+If you created your Ohme account through a social login (Apple/Facebook/Google), you will need to set a password in the Ohme app or 'reset your password' to use this integration.
 
 
 ## Entities
@@ -38,6 +41,7 @@ This integration exposes the following entities:
     * Car Charging - On when a car is connected and drawing power
     * Pending Approval - On when a car is connected and waiting for approval
     * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
+    * Charger Online - On if charger is online and connected to the internet
 * Sensors (Charge power) - **Only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
@@ -54,7 +58,7 @@ This integration exposes the following entities:
 * Switches (Charge state) - **These are only functional when a car is connected**
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
-* Inputs - **If in a charge session, this will change the active charge. If disconnected, this will change your first schedule.**
+* Inputs - **If in a charge session, these change the active charge. If disconnected, they change your first schedule.**
     * Number: Target Percentage - Change the target battery percentage
     * Time: Target Time - Change the target time
 * Buttons
@@ -66,15 +70,17 @@ Updates are made to entity states by polling the Ohme API. This is handled by 'c
 The coordinators are listed with their refresh intervals below. Relevant coordinators are also refreshed when using switches and buttons.
 
 * OhmeChargeSessionsCoordinator (30s refresh)
-    * Binary Sensors: All
+    * Binary Sensors: Car connected, car charging, pending approval and charge slot active
     * Buttons: Approve Charge
     * Sensors: Power, current, voltage and next slot (start & end)
     * Switches: Max charge, pause charge
-    * Inputs: Target time and target percentage
+    * Inputs: Target time and target percentage (If car connected)
 * OhmeAccountInfoCoordinator (1m refresh)
     * Switches: Lock buttons, require approval and sleep when inactive
 * OhmeAdvancedSettingsCoordinator (1m refresh)
     * Sensors: CT reading sensor
+    * Binary Sensors: Charger online
 * OhmeStatisticsCoordinator (30m refresh)
     * Sensors: Accumulative energy usage
-
+* OhmeChargeSchedulesCoordinator (10m refresh)
+    * Inputs: Target time and target percentage (If car disconnected)

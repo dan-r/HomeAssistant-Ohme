@@ -303,15 +303,15 @@ class OhmeApiClient:
 
         return resp['totalStats']
 
-    async def async_get_ct_reading(self):
-        """Get CT clamp reading."""
+    async def async_get_advanced_settings(self):
+        """Get advanced settings (mainly for CT clamp reading)"""
         resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
 
         # If we ever get a reading above 0, assume CT connected
         if resp['clampAmps'] and resp['clampAmps'] > 0:
             self._ct_connected = True
 
-        return resp['clampAmps']
+        return resp
 
 
 # Exceptions

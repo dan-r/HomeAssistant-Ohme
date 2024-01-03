@@ -202,7 +202,7 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
     @property
     def native_value(self):
         """Get value from data returned from API by coordinator"""
-        return self.coordinator.data
+        return self.coordinator.data['clampAmps']
 
 
 class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):

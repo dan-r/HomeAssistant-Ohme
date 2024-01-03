@@ -41,7 +41,7 @@ This integration exposes the following entities:
     * Car Charging - On when a car is connected and drawing power
     * Pending Approval - On when a car is connected and waiting for approval
     * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
-    * Charger Status - On if charger is online and connected to the internet
+    * Charger Online - On if charger is online and connected to the internet
 * Sensors (Charge power) - **Only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
@@ -79,7 +79,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
     * Switches: Lock buttons, require approval and sleep when inactive
 * OhmeAdvancedSettingsCoordinator (1m refresh)
     * Sensors: CT reading sensor
-    * Binary Sensors: Charger status
+    * Binary Sensors: Charger online
 * OhmeStatisticsCoordinator (30m refresh)
     * Sensors: Accumulative energy usage
 * OhmeChargeSchedulesCoordinator (10m refresh)

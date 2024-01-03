@@ -314,7 +314,7 @@ class ChargerOnlineBinarySensor(
         BinarySensorEntity):
     """Binary sensor for if charger is online."""
 
-    _attr_name = "Charger Status"
+    _attr_name = "Charger Online"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     def __init__(

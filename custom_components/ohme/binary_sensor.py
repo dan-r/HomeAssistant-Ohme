@@ -9,8 +9,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, DATA_CLIENT
-from .coordinator import OhmeChargeSessionsCoordinator
+from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED, DATA_CLIENT
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import charge_graph_in_slot
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,11 +23,13 @@ async def async_setup_entry(
     """Setup sensors and configure coordinator."""
     client = hass.data[DOMAIN][DATA_CLIENT]
     coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    coordinator_advanced = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_ADVANCED]
 
     sensors = [ConnectedBinarySensor(coordinator, hass, client),
                ChargingBinarySensor(coordinator, hass, client),
                PendingApprovalBinarySensor(coordinator, hass, client),
-               CurrentSlotBinarySensor(coordinator, hass, client)]
+               CurrentSlotBinarySensor(coordinator, hass, client),
+               ChargerOnlineBinarySensor(coordinator_advanced, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -119,7 +121,7 @@ class ChargingBinarySensor(
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("ohme_car_charging")
+        return self._client.get_unique_id("car_charging")
 
     @property
     def is_on(self) -> bool:
@@ -286,7 +288,7 @@ class CurrentSlotBinarySensor(
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("ohme_slot_active")
+        return self._client.get_unique_id("slot_active")
 
     @property
     def is_on(self) -> bool:
@@ -306,3 +308,47 @@ class CurrentSlotBinarySensor(
         self._last_updated = utcnow()
 
         self.async_write_ha_state()
+
+class ChargerOnlineBinarySensor(
+        CoordinatorEntity[OhmeAdvancedSettingsCoordinator],
+        BinarySensorEntity):
+    """Binary sensor for if charger is online."""
+
+    _attr_name = "Charger Status"
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+
+    def __init__(
+            self,
+            coordinator: OhmeAdvancedSettingsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._attributes = {}
+        self._last_updated = None
+        self._state = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "binary_sensor.{}", "ohme_charger_online", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:calendar-check"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("charger_online")
+
+    @property
+    def is_on(self) -> bool:
+        if self.coordinator.data and self.coordinator.data["online"]:
+            return True
+        elif self.coordinator.data:
+            return False
+        return None

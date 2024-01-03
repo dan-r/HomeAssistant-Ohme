@@ -93,7 +93,7 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         try:
-            return await self._client.async_get_ct_reading()
+            return await self._client.async_get_advanced_settings()
 
         except BaseException:
             raise UpdateFailed("Error communicating with API")

@@ -41,6 +41,7 @@ This integration exposes the following entities:
     * Car Charging - On when a car is connected and drawing power
     * Pending Approval - On when a car is connected and waiting for approval
     * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
+    * Charger Status - On if charger is online and connected to the internet
 * Sensors (Charge power) - **Only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
@@ -69,7 +70,7 @@ Updates are made to entity states by polling the Ohme API. This is handled by 'c
 The coordinators are listed with their refresh intervals below. Relevant coordinators are also refreshed when using switches and buttons.
 
 * OhmeChargeSessionsCoordinator (30s refresh)
-    * Binary Sensors: All
+    * Binary Sensors: Car connected, car charging, pending approval and charge slot active
     * Buttons: Approve Charge
     * Sensors: Power, current, voltage and next slot (start & end)
     * Switches: Max charge, pause charge
@@ -78,6 +79,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
     * Switches: Lock buttons, require approval and sleep when inactive
 * OhmeAdvancedSettingsCoordinator (1m refresh)
     * Sensors: CT reading sensor
+    * Binary Sensors: Charger status
 * OhmeStatisticsCoordinator (30m refresh)
     * Sensors: Accumulative energy usage
 * OhmeChargeSchedulesCoordinator (10m refresh)

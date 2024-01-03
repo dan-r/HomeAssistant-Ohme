@@ -338,7 +338,7 @@ class ChargerOnlineBinarySensor(
     @property
     def icon(self):
         """Icon of the sensor."""
-        return "mdi:calendar-check"
+        return "mdi:web"
 
     @property
     def unique_id(self) -> str:

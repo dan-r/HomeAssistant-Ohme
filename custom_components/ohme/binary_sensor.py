@@ -121,7 +121,7 @@ class ChargingBinarySensor(
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("car_charging")
+        return self._client.get_unique_id("ohme_car_charging")
 
     @property
     def is_on(self) -> bool:
@@ -288,7 +288,7 @@ class CurrentSlotBinarySensor(
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("slot_active")
+        return self._client.get_unique_id("ohmr_slot_active")
 
     @property
     def is_on(self) -> bool:

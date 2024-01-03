@@ -1,13 +1,8 @@
 import voluptuous as vol
 from homeassistant.config_entries import (ConfigFlow, OptionsFlow)
-from .const import DOMAIN
+from .const import DOMAIN, CONFIG_SCHEMA
 from .api_client import OhmeApiClient
 
-
-USER_SCHEMA = vol.Schema({
-    vol.Required("email"): str,
-    vol.Required("password"): str
-})
 
 class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow."""
@@ -28,5 +23,5 @@ class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
 
         return self.async_show_form(
-            step_id="user", data_schema=USER_SCHEMA, errors=errors
+            step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
         )

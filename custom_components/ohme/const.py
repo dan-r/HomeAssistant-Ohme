@@ -1,7 +1,7 @@
 """Component constants"""
 DOMAIN = "ohme"
 USER_AGENT = "dan-r-homeassistant-ohme"
-INTEGRATION_VERSION = "0.3.1"
+INTEGRATION_VERSION = "0.3.2"
 
 DATA_CLIENT = "client"
 DATA_COORDINATORS = "coordinators"

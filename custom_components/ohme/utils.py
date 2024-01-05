@@ -18,8 +18,8 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
     # Filter to points from now onwards
     data = [x for x in data if x["t"] > now]
 
-    # Give up if we have less than 3 points
-    if len(data) < 3:
+    # Give up if we have less than 2 points
+    if len(data) < 2:
         return {"start": None, "end": None}
 
     start_ts = None

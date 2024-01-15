@@ -65,8 +65,7 @@ async def async_setup_entry(hass, entry):
     hass.data[DOMAIN][DATA_COORDINATORS] = coordinators
 
     # Create tasks for each entity type
-    entity_types = ["sensor", "binary_sensor", "switch", "button", "number", "time"]
-    for entity_type in entity_types:
+    for entity_type in ENTITY_TYPES:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, entity_type)
         )
@@ -77,4 +76,4 @@ async def async_setup_entry(hass, entry):
 async def async_unload_entry(hass, entry):
     """Unload a config entry."""
 
-    return await hass.config_entries.async_unload_platforms(entry, ['binary_sensor', 'sensor', 'switch'])
+    return await hass.config_entries.async_unload_platforms(entry, ENTITY_TYPES)

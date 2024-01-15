@@ -17,9 +17,9 @@
   },
   "options": {
     "step": {
-      "user": {
+      "init": {
         "title": "Update Account Info",
-        "description": "Update your basic account information.",
+        "description": "Update your Ohme account information.",
         "data": {
           "email": "Email address",
           "password": "Password"

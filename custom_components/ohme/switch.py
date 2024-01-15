@@ -203,7 +203,7 @@ class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Swi
         if self.coordinator.data is None:
             self._attr_is_on = None
         else:
-            settings = self.coordinator.data["chargeDevices"][0]["optionalSettings"]
+            settings = self.coordinator.data["optionalSettings"]
             self._attr_is_on = bool(settings[self._config_key])
 
         self._last_updated = utcnow()

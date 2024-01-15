@@ -49,7 +49,7 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         try:
-            return await self._client.async_get_account_info()
+            return await self._client.async_get_charge_device()
 
         except BaseException:
             raise UpdateFailed("Error communicating with API")

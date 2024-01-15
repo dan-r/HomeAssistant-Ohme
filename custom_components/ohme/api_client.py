@@ -273,6 +273,12 @@ class OhmeApiClient:
         resp = await self._get_request('/v1/users/me/account')
 
         return resp
+    
+    async def async_get_charge_device(self):
+        resp = await self.async_get_account_info()
+        device = resp[0]
+        
+        return device
 
     async def async_update_device_info(self, is_retry=False):
         """Update _device_info with our charger model."""

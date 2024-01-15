@@ -15,13 +15,15 @@ GOOGLE_API_KEY = "AIzaSyC8ZeZngm33tpOXLpbXeKfwtyZ1WrkbdBY"
 class OhmeApiClient:
     """API client for Ohme EV chargers."""
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, hass=None, config_entry=None):
         if email is None or password is None:
             raise Exception("Credentials not provided")
 
         # Credentials from configuration
         self._email = email
         self._password = password
+        self._hass = hass
+        self._config_entry = config_entry
 
         # Charger and its capabilities
         self._device_info = None
@@ -35,7 +37,7 @@ class OhmeApiClient:
 
         # User info
         self._user_id = ""
-        self._serial = ""
+        self._serial = config_entry.data['serial'] if config_entry else None
 
         # Cache the last rule to use when we disable max charge or change schedule
         self._last_rule = {}
@@ -226,7 +228,7 @@ class OhmeApiClient:
 
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
         return bool(result)
-    
+
     async def async_get_schedule(self):
         """Get the first schedule."""
         schedules = await self._get_request("/v1/chargeRules")
@@ -261,7 +263,7 @@ class OhmeApiClient:
         """Try to fetch charge sessions endpoint.
            If we get a non 200 response, refresh auth token and try again"""
         resp = await self._get_request('/v1/chargeSessions')
-        resp = resp[0]
+        resp = next(filter(lambda x: x['chargeDevice']['id'] == self._serial, resp), None)
 
         # Cache the current rule if we are given it
         if resp["mode"] == "SMART_CHARGE" and 'appliedRule' in resp:
@@ -276,15 +278,14 @@ class OhmeApiClient:
     
     async def async_get_charge_device(self):
         resp = await self.async_get_account_info()
-        device = resp[0]
+        device = next(filter(lambda x: x['id'] == self._serial, resp['chargeDevices']), None)
         
         return device
 
     async def async_update_device_info(self, is_retry=False):
         """Update _device_info with our charger model."""
         resp = await self.async_get_account_info()
-
-        device = resp['chargeDevices'][0]
+        device = next(filter(lambda x: x['id'] == self._serial, resp['chargeDevices']), None)
 
         info = DeviceInfo(
             identifiers={(DOMAIN, "ohme_charger")},
@@ -297,10 +298,23 @@ class OhmeApiClient:
 
         self._capabilities = device['modelCapabilities']
         self._user_id = resp['user']['id']
-        self._serial = device['id']
         self._device_info = info
 
+        self._hass.config_entries.async_update_entry(
+            self._config_entry, title=f"{device['modelTypeDisplayName']} ({device['id']})"
+        )
+
         return True
+    
+    async def async_get_chargers(self):
+        """Get a list of chargers on an account."""
+        resp = await self.async_get_account_info()
+        chargers = []
+
+        for device in resp['chargeDevices']:
+            chargers.append(device['id'])
+
+        return chargers
 
     async def async_get_charge_statistics(self):
         """Get charge statistics. Currently this is just for all time (well, Jan 2019)."""

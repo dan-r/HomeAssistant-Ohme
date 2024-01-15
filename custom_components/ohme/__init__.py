@@ -12,9 +12,9 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     return True
 
 
-async def async_setup_dependencies(hass, config):
+async def async_setup_dependencies(hass, entry):
     """Instantiate client and refresh session"""
-    client = OhmeApiClient(config['email'], config['password'])
+    client = OhmeApiClient(entry.data['email'], entry.data['password'], hass, entry)
     hass.data[DOMAIN][DATA_CLIENT] = client
 
     await client.async_create_session()
@@ -32,7 +32,7 @@ async def async_setup_entry(hass, entry):
     if "email" not in config:
         return False
 
-    await async_setup_dependencies(hass, config)
+    await async_setup_dependencies(hass, entry)
 
     coordinators = [
         OhmeChargeSessionsCoordinator(hass=hass),   # COORDINATOR_CHARGESESSIONS
@@ -88,7 +88,15 @@ async def async_migrate_entry(hass: core.HomeAssistant, config_entry) -> bool:
     # Version number has gone up
     if config_entry.version < CONFIG_VERSION:
         _LOGGER.debug("Migrating from version %s", config_entry.version)
-        new_data = config_entry.data
+        new_data = dict(config_entry.data)
+
+        # 1 -> 2: Add serial to config
+        if CONFIG_VERSION >= 2:
+            client = OhmeApiClient(new_data['email'], new_data['password'])
+            await client.async_create_session()
+            
+            chargers = await client.async_get_chargers()
+            new_data['serial'] = chargers[0]
 
         config_entry.version = CONFIG_VERSION
         hass.config_entries.async_update_entry(config_entry, data=new_data)

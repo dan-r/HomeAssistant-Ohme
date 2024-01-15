@@ -1,6 +1,6 @@
 import voluptuous as vol
 from homeassistant.config_entries import (ConfigFlow, OptionsFlow)
-from .const import DOMAIN
+from .const import DOMAIN, CONFIG_VERSION
 from .api_client import OhmeApiClient
 
 
@@ -11,6 +11,7 @@ USER_SCHEMA = vol.Schema({
 
 class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow."""
+    VERSION = CONFIG_VERSION
 
     async def async_step_user(self, info):
         errors = {}

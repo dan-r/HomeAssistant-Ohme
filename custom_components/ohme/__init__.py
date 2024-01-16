@@ -12,9 +12,9 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     return True
 
 
-async def async_setup_dependencies(hass, config):
+async def async_setup_dependencies(hass, entry):
     """Instantiate client and refresh session"""
-    client = OhmeApiClient(config['email'], config['password'])
+    client = OhmeApiClient(entry.data['email'], entry.data['password'])
     hass.data[DOMAIN][DATA_CLIENT] = client
 
     await client.async_create_session()
@@ -24,7 +24,7 @@ async def async_setup_dependencies(hass, config):
 async def async_update_listener(hass, entry):
     """Handle options flow credentials update."""
     # Re-instantiate the API client
-    await async_setup_dependencies(hass, dict(entry.data))
+    await async_setup_dependencies(hass, entry)
 
     # Refresh all coordinators for good measure
     for coordinator in hass.data[DOMAIN][DATA_COORDINATORS]:
@@ -34,15 +34,8 @@ async def async_update_listener(hass, entry):
 async def async_setup_entry(hass, entry):
     """This is called from the config flow."""
     hass.data.setdefault(DOMAIN, {})
-    config = dict(entry.data)
 
-    if entry.options:
-        config.update(entry.options)
-
-    if "email" not in config:
-        return False
-
-    await async_setup_dependencies(hass, config)
+    await async_setup_dependencies(hass, entry)
 
     coordinators = [
         OhmeChargeSessionsCoordinator(hass=hass),   # COORDINATOR_CHARGESESSIONS

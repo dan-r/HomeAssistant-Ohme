@@ -22,7 +22,12 @@
         "description": "Update your Ohme account information.",
         "data": {
           "email": "Email address",
-          "password": "Password"
+          "password": "Password",
+          "never_session_specific": "Never update an ongoing session"
+        },
+        "data_description": {
+          "password": "If you are not changing your credentials, leave these fields empty.",
+          "never_session_specific": "When adjusting charge percentage, charge target or preconditioning settings, the schedule will always be updated even if a charge session is in progress."
         }
       }
     },

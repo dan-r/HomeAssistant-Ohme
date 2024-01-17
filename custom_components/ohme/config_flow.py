@@ -85,7 +85,7 @@ class OhmeOptionsFlow(OptionsFlow):
                             "password"
                         ): str,
                         vol.Required(
-                            "never_session_specific"
+                            "never_session_specific", default=self._config_entry.options.get("never_session_specific", False)
                         ) : bool
                     }), errors=errors
         )

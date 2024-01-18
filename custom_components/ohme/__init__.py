@@ -12,27 +12,32 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     return True
 
 
-async def async_setup_dependencies(hass, config):
+async def async_setup_dependencies(hass, entry):
     """Instantiate client and refresh session"""
-    client = OhmeApiClient(config['email'], config['password'])
+    client = OhmeApiClient(entry.data['email'], entry.data['password'])
     hass.data[DOMAIN][DATA_CLIENT] = client
+
+    hass.data[DOMAIN][DATA_OPTIONS] = entry.options
 
     await client.async_create_session()
     await client.async_update_device_info()
 
 
+async def async_update_listener(hass, entry):
+    """Handle options flow credentials update."""
+    # Re-instantiate the API client
+    await async_setup_dependencies(hass, entry)
+
+    # Refresh all coordinators for good measure
+    for coordinator in hass.data[DOMAIN][DATA_COORDINATORS]:
+        await coordinator.async_refresh()
+
+
 async def async_setup_entry(hass, entry):
     """This is called from the config flow."""
     hass.data.setdefault(DOMAIN, {})
-    config = dict(entry.data)
 
-    if entry.options:
-        config.update(entry.options)
-
-    if "email" not in config:
-        return False
-
-    await async_setup_dependencies(hass, config)
+    await async_setup_dependencies(hass, entry)
 
     coordinators = [
         OhmeChargeSessionsCoordinator(hass=hass),   # COORDINATOR_CHARGESESSIONS
@@ -70,6 +75,8 @@ async def async_setup_entry(hass, entry):
             hass.config_entries.async_forward_entry_setup(entry, entity_type)
         )
 
+    entry.async_on_unload(entry.add_update_listener(async_update_listener))
+
     return True
 
 
@@ -77,6 +84,7 @@ async def async_unload_entry(hass, entry):
     """Unload a config entry."""
 
     return await hass.config_entries.async_unload_platforms(entry, ENTITY_TYPES)
+
 
 async def async_migrate_entry(hass: core.HomeAssistant, config_entry) -> bool:
     """Migrate old entry."""
@@ -92,7 +100,7 @@ async def async_migrate_entry(hass: core.HomeAssistant, config_entry) -> bool:
 
         config_entry.version = CONFIG_VERSION
         hass.config_entries.async_update_entry(config_entry, data=new_data)
-        
+
         _LOGGER.debug("Migration to version %s successful", config_entry.version)
 
     return True

@@ -1,5 +1,6 @@
 from time import time
 from datetime import datetime, timedelta
+from .const import DOMAIN, DATA_OPTIONS
 import pytz
 
 
@@ -74,9 +75,13 @@ def time_next_occurs(hour, minute):
 
     return target
 
-def session_in_progress(data):
+def session_in_progress(hass, data):
     """Is there a session in progress?
        Used to check if we should update the current session rather than the first schedule."""
+    # If config option set, never update session specific schedule
+    if get_option(hass, "never_session_specific"):
+        return False
+    
     # Default to False with no data
     if not data:
         return False
@@ -86,3 +91,7 @@ def session_in_progress(data):
         return False
     
     return True
+
+def get_option(hass, option):
+    """Return option value, default to False."""
+    return hass.data[DOMAIN][DATA_OPTIONS].get(option, None)

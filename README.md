@@ -59,10 +59,18 @@ This integration exposes the following entities:
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
 * Inputs - **If in a charge session, these change the active charge. If disconnected, they change your first schedule.**
-    * Number: Target Percentage - Change the target battery percentage
-    * Time: Target Time - Change the target time
+    * Number
+        * Target Percentage - Change the target battery percentage
+        * Preconditioning - Change pre-conditioning time. 0 is off
+    * Time
+        * Target Time - Change the target time
 * Buttons
     * Approve Charge - Approves a charge when 'Pending Approval' is on
+
+## Options
+Some options can be set from the 'Configure' menu in Home Assistant:
+* Never update an ongoing session - Override the default behaviour of the target time, percentage and preconditioning inputs and only ever update the schedule, not the current session. This was added as changing the current session can cause issues for customers on Intelligent Octopus Go.
+
 
 ## Coordinators
 Updates are made to entity states by polling the Ohme API. This is handled by 'coordinators' defined to Home Assistant, which refresh at a set interval or when externally triggered.
@@ -74,7 +82,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
     * Buttons: Approve Charge
     * Sensors: Power, current, voltage and next slot (start & end)
     * Switches: Max charge, pause charge
-    * Inputs: Target time and target percentage (If car connected)
+    * Inputs: Target time, target percentage and preconditioning (If car connected)
 * OhmeAccountInfoCoordinator (1m refresh)
     * Switches: Lock buttons, require approval and sleep when inactive
 * OhmeAdvancedSettingsCoordinator (1m refresh)
@@ -83,4 +91,4 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
 * OhmeStatisticsCoordinator (30m refresh)
     * Sensors: Accumulative energy usage
 * OhmeChargeSchedulesCoordinator (10m refresh)
-    * Inputs: Target time and target percentage (If car disconnected)
+    * Inputs: Target time, target percentage and preconditioning (If car disconnected)

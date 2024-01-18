@@ -233,7 +233,7 @@ class OhmeApiClient:
 
         return schedules[0] if len(schedules) > 0 else None
 
-    async def async_update_schedule(self, target_percent=None, target_time=None):
+    async def async_update_schedule(self, target_percent=None, target_time=None, pre_condition=None, pre_condition_length=None):
         """Update the first listed schedule."""
         rule = await self.async_get_schedule()
 
@@ -246,6 +246,12 @@ class OhmeApiClient:
             rule['targetPercent'] = target_percent
         if target_time is not None:
             rule['targetTime'] = (target_time[0] * 3600) + (target_time[1] * 60)
+
+        # Update pre-conditioning if provided
+        if pre_condition is not None:
+            rule['preconditioningEnabled'] = pre_condition
+        if pre_condition_length is not None:
+            rule['preconditionLengthMins'] = pre_condition_length
 
         await self._put_request(f"/v1/chargeRules/{rule['id']}", data=rule)
         return True

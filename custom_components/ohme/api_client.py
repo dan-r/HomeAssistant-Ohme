@@ -227,6 +227,18 @@ class OhmeApiClient:
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
         return bool(result)
     
+    async def async_change_price_cap(self, enabled=None, cap=None):
+        """Change price cap settings."""
+        settings = await self._get_request("/v1/users/me/settings")
+        if enabled is not None:
+            settings['chargeSettings'][0]['enabled'] = enabled
+
+        if cap is not None:
+            settings['chargeSettings'][0]['value'] = cap
+
+        result = await self._put_request("/v1/users/me/settings", data=settings)
+        return bool(result)
+
     async def async_get_schedule(self):
         """Get the first schedule."""
         schedules = await self._get_request("/v1/chargeRules")

@@ -1,7 +1,7 @@
 """Component constants"""
 DOMAIN = "ohme"
 USER_AGENT = "dan-r-homeassistant-ohme"
-INTEGRATION_VERSION = "0.4.0"
+INTEGRATION_VERSION = "0.4.1"
 CONFIG_VERSION = 1
 ENTITY_TYPES = ["sensor", "binary_sensor", "switch", "button", "number", "time"]
 

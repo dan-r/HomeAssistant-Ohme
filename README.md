@@ -1,6 +1,6 @@
 # Ohme EV Charger for Home Assistant
 
-A basic integration for interacting with Ohme EV Chargers.
+An integration for interacting with Ohme EV Chargers.
 
 This is an unofficial integration. I have no affiliation with Ohme besides owning one of their EV chargers.
 

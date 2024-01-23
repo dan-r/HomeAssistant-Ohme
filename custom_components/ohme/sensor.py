@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
+    SensorStateClass,
     SensorEntity
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -212,6 +213,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
     _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 1
     _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL
 
     def __init__(
             self,

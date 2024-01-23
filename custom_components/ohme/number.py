@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 from homeassistant.components.number import NumberEntity, NumberDeviceClass
-from homeassistant.components.number.const import NumberMode
+from homeassistant.components.number.const import NumberMode, PERCENTAGE
 from homeassistant.const import UnitOfTime
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
@@ -32,6 +32,7 @@ class TargetPercentNumber(NumberEntity):
     """Target percentage sensor."""
     _attr_name = "Target Percentage"
     _attr_device_class = NumberDeviceClass.BATTERY
+    _attr_native_unit_of_measurement = PERCENTAGE
     _attr_suggested_display_precision = 0
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
@@ -193,7 +194,6 @@ class PreconditioningNumber(NumberEntity):
 
 class PriceCapNumber(NumberEntity):
     _attr_name = "Price Cap"
-    _attr_native_unit_of_measurement = "p"
     _attr_device_class = NumberDeviceClass.MONETARY
     _attr_mode = NumberMode.BOX
     _attr_native_step = 0.1
@@ -230,6 +230,19 @@ class PriceCapNumber(NumberEntity):
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()
 
+    @property
+    def native_unit_of_measurement(self):
+        if self.coordinator.data is None:
+            return None
+        
+        penny_unit = {
+            "GBP": "p",
+            "EUR": "c"
+        }
+        currency = self.coordinator.data["userSettings"].get("currencyCode", "XXX")
+
+        return penny_unit.get(currency, f"{currency}/100")
+    
     @property
     def icon(self):
         """Icon of the sensor."""

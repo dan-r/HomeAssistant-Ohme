@@ -30,7 +30,12 @@ This is the recommended installation method.
 ## Setup
 From the Home Assistant Integrations page, search for and add the Ohme integration.
 
-If you created your Ohme account through a social login (Apple/Facebook/Google), you will need to set a password in the Ohme app or 'reset your password' to use this integration.
+### Social Logins
+If you created your Ohme account through an Apple, Facebook or Google account, you will need to set a password in the Ohme app.
+
+Open the menu in the Ohme app (☰) and note the email address shown under your name. This is your login email address and may differ from what you expect.
+
+To set a password, open **Settings** from this menu and click **Account Details > Change Password**. Thanks to [EV Nick](https://www.youtube.com/c/NicolasRaimo) for these instructions.
 
 
 ## Entities

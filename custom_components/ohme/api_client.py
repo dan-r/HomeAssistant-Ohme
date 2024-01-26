@@ -41,9 +41,10 @@ class OhmeApiClient:
         self._last_rule = {}
 
         # Sessions
+        timeout = aiohttp.ClientTimeout(total=10)
         self._session = aiohttp.ClientSession(
-            base_url="https://api.ohme.io")
-        self._auth_session = aiohttp.ClientSession()
+            base_url="https://api.ohme.io", timeout=timeout)
+        self._auth_session = aiohttp.ClientSession(timeout=timeout)
 
     # Auth methods
 

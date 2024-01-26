@@ -11,18 +11,10 @@ def _format_charge_graph(charge_start, points):
     return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
 
 
-def charge_graph_next_slot(charge_start, points, skip_format=False):
-    """Get the next charge slot start/end times from a list of graph points."""
-    now = int(time())
-    data = points if skip_format else _format_charge_graph(charge_start, points)
-
-    # Filter to points from now onwards
-    data = [x for x in data if x["t"] > now]
-
-    # Give up if we have less than 2 points
-    if len(data) < 2:
-        return {"start": None, "end": None}
-
+def _next_slot(data, live=False):
+    """Get the next slot. live is whether or not we may start mid charge. Eg: For the next slot end sensor, we dont have the
+       start but still want the end of the in progress session, but for the slot list sensor we only want slots that have
+       a start AND an end."""
     start_ts = None
     end_ts = None
 
@@ -38,14 +30,66 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
             start_ts = data[idx]["t"] + 1
 
         # Take the first delta of 0 as the end
-        if delta == 0 and not end_ts:
+        if delta == 0 and (start_ts or live) and not end_ts:
             end_ts = data[idx]["t"] + 1
+
+        if start_ts and end_ts:
+            break
+    
+    return [start_ts, end_ts, idx]
+
+
+def charge_graph_next_slot(charge_start, points, skip_format=False):
+    """Get the next charge slot start/end times from a list of graph points."""
+    now = int(time())
+    data = points if skip_format else _format_charge_graph(charge_start, points)
+
+    # Filter to points from now onwards
+    data = [x for x in data if x["t"] > now]
+
+    # Give up if we have less than 2 points
+    if len(data) < 2:
+        return {"start": None, "end": None}
+
+    start_ts, end_ts, final_idx = _next_slot(data, live=True)
 
     # These need to be presented with tzinfo or Home Assistant will reject them
     return {
         "start": datetime.utcfromtimestamp(start_ts).replace(tzinfo=pytz.utc) if start_ts else None,
         "end": datetime.utcfromtimestamp(end_ts).replace(tzinfo=pytz.utc) if end_ts else None,
     }
+
+
+def charge_graph_slot_list(charge_start, points, skip_format=False):
+    """Get list of charge slots from graph points."""
+    now = int(time())
+    data = points if skip_format else _format_charge_graph(charge_start, points)
+
+    # Give up if we have less than 2 points
+    if len(data) < 2:
+        return []
+
+    slots = []
+
+    # While we still have data, keep looping
+    while len(data) > 1:
+        # Get the next slot
+        result = _next_slot(data)
+
+        # Break if we fail
+        if result[0] is None:
+            break
+        
+        # Append a tuple to the slots list with the start end end time
+        slots.append((
+            datetime.fromtimestamp(result[0]).strftime('%H:%M'),
+            datetime.fromtimestamp(result[1]).strftime('%H:%M'),
+        ))
+
+        # Cut off where we got to in this iteration for next time
+        data = data[result[2]:]
+
+    return slots
 
 
 def charge_graph_in_slot(charge_start, points, skip_format=False):
@@ -75,6 +119,7 @@ def time_next_occurs(hour, minute):
 
     return target
 
+
 def session_in_progress(hass, data):
     """Is there a session in progress?
        Used to check if we should update the current session rather than the first schedule."""
@@ -91,6 +136,7 @@ def session_in_progress(hass, data):
         return False
     
     return True
+
 
 def get_option(hass, option):
     """Return option value, default to False."""

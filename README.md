@@ -47,15 +47,16 @@ This integration exposes the following entities:
     * Pending Approval - On when a car is connected and waiting for approval
     * Charge Slot Active - On when a charge slot is in progress according to the Ohme-generated charge plan
     * Charger Online - On if charger is online and connected to the internet
-* Sensors (Charge power) - **Only available during a charge session**
+* Sensors (Session specific) - **Only available during a charge session**
     * Power Draw (Watts) - Power draw of connected car
     * Current Draw (Amps) - Current draw of connected car
     * Voltage (Volts) - Voltage reading
+    * Charge Slots - A comma separated list of assigned charge slots 
+    * Next Charge Slot Start - The next time your car will start charging according to the Ohme-generated charge plan
+    * Next Charge Slot End - The next time your car will stop charging according to the Ohme-generated charge plan
 * Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
-    * Next Charge Slot Start - The next time your car will start charging according to the Ohme-generated charge plan
-    * Next Charge Slot End - The next time your car will stop charging according to the Ohme-generated charge plan
 * Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge
@@ -87,7 +88,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
 * OhmeChargeSessionsCoordinator (30s refresh)
     * Binary Sensors: Car connected, car charging, pending approval and charge slot active
     * Buttons: Approve Charge
-    * Sensors: Power, current, voltage and next slot (start & end)
+    * Sensors: Power, current, voltage, charge slots and next slot (start & end)
     * Switches: Max charge, pause charge
     * Inputs: Target time, target percentage and preconditioning (If car connected)
 * OhmeAccountInfoCoordinator (1m refresh)

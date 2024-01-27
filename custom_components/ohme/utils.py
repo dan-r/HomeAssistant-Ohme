@@ -33,7 +33,7 @@ def _next_slot(data, live=False):
             start_ts = data[idx]["t"] + 1
 
         # Take the first delta of 0 as the end
-        if delta == 0 and (start_ts or live) and not end_ts:
+        if delta == 0 and data[idx]["y"] != 0 and (start_ts or live) and not end_ts:
             end_ts = data[idx]["t"] + 1
 
         if start_ts and end_ts:

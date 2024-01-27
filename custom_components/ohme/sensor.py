@@ -1,6 +1,6 @@
 """Platform for sensor integration."""
 from __future__ import annotations
-
+from functools import reduce
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
@@ -13,8 +13,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
-from .utils import charge_graph_next_slot
-
+from .utils import charge_graph_next_slot, charge_graph_slot_list
 
 async def async_setup_entry(
     hass: core.HomeAssistant,
@@ -35,7 +34,8 @@ async def async_setup_entry(
                CTSensor(adv_coordinator, hass, client),
                EnergyUsageSensor(stats_coordinator, hass, client),
                NextSlotEndSensor(coordinator, hass, client),
-               NextSlotStartSensor(coordinator, hass, client)]
+               NextSlotStartSensor(coordinator, hass, client),
+               SlotListSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -353,4 +353,60 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
 
         self._last_updated = utcnow()
 
+        self.async_write_ha_state()
+
+
+class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+    """Sensor for next smart charge slot end time."""
+    _attr_name = "Charge Slots"
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_charge_slots", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        )
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("charge_slots")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:timetable"
+
+    @property
+    def native_value(self):
+        """Return pre-calculated state."""
+        return self._state
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get a list of charge slots."""
+        if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
+            self._state = None
+        else:
+            slots = charge_graph_slot_list(
+                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+
+            # Convert list of tuples to text
+            self._state = reduce(lambda acc, slot: acc + f"{slot[0]}-{slot[1]}, ", slots, "")[:-2]
+
+            # Make sure we return None/Unknown if the list is empty
+            self._state = None if self._state == "" else self._state
+            
+        self._last_updated = utcnow()
         self.async_write_ha_state()

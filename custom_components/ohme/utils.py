@@ -3,11 +3,14 @@ from datetime import datetime, timedelta
 from .const import DOMAIN, DATA_OPTIONS
 import pytz
 
-
 def _format_charge_graph(charge_start, points):
     """Convert relative time in points array to real timestamp (s)."""
 
-    charge_start = round(charge_start / 1000)
+    # Add 30s to effectively round all times to the nearest minute
+    charge_start = round(charge_start / 1000) + 30
+
+    # _LOGGER.debug("Charge slot graph points: " + str([{"t": datetime.fromtimestamp(x["x"] + charge_start).strftime('%H:%M:%S'), "y": x["y"]} for x in points]))
+
     return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
 
 

@@ -6,8 +6,7 @@ import pytz
 def _format_charge_graph(charge_start, points):
     """Convert relative time in points array to real timestamp (s)."""
 
-    # Add 30s to effectively round all times to the nearest minute
-    charge_start = round(charge_start / 1000) + 30
+    charge_start = round(charge_start / 1000)
 
     # _LOGGER.debug("Charge slot graph points: " + str([{"t": datetime.fromtimestamp(x["x"] + charge_start).strftime('%H:%M:%S'), "y": x["y"]} for x in points]))
 
@@ -89,9 +88,10 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
             break
         
         # Append a tuple to the slots list with the start end end time
+        # Add 30s to each time to round to the next minute
         slots.append((
-            datetime.fromtimestamp(result[0]).strftime('%H:%M'),
-            datetime.fromtimestamp(result[1]).strftime('%H:%M'),
+            datetime.fromtimestamp(result[0] + 30).strftime('%H:%M'),
+            datetime.fromtimestamp(result[1] + 30).strftime('%H:%M'),
         ))
 
         # Cut off where we got to in this iteration for next time

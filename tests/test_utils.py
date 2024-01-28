@@ -15,10 +15,10 @@ async def test_format_charge_graph(hass):
     start_time_ms = start_time * 1000
 
     result = utils._format_charge_graph(start_time_ms, TEST_DATA)
-    expected = [{"t": TEST_DATA[0]['x'] + start_time + 30, "y": mock.ANY},
-                {"t": TEST_DATA[1]['x'] + start_time + 30, "y": mock.ANY},
-                {"t": TEST_DATA[2]['x'] + start_time + 30, "y": mock.ANY},
-                {"t": TEST_DATA[3]['x'] + start_time + 30, "y": mock.ANY}]
+    expected = [{"t": TEST_DATA[0]['x'] + start_time, "y": mock.ANY},
+                {"t": TEST_DATA[1]['x'] + start_time, "y": mock.ANY},
+                {"t": TEST_DATA[2]['x'] + start_time, "y": mock.ANY},
+                {"t": TEST_DATA[3]['x'] + start_time, "y": mock.ANY}]
 
     assert expected == result
 

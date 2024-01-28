@@ -19,6 +19,7 @@ def _sanitise_points(points):
     """Discard any points that aren't on a quarter-hour boundary."""
     output = []
     seen = []
+    high = max([x['y'] for x in points])
 
     points.reverse()
 
@@ -29,7 +30,9 @@ def _sanitise_points(points):
         hm = dt.strftime('%H:%M')
         m = int(dt.strftime('%M'))
 
-        if m % 15 == 0 and hm not in seen:
+        # If this point is on a 15m boundary and we haven't seen this time before
+        # OR y == yMax - so we don't miss the end of the last slot
+        if (m % 15 == 0 and hm not in seen) or point['y'] == high:
             output.append(point)
             seen.append(hm)
 
@@ -112,7 +115,7 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
         result = _next_slot(data)
 
         # Break if we fail
-        if result[0] is None:
+        if result[0] is None or result[1] is None:
             break
         
         # Append a tuple to the slots list with the start end end time

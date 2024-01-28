@@ -14,7 +14,7 @@ def _format_charge_graph(charge_start, points):
     return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
 
 
-def _next_slot(data, live=False):
+def _next_slot(data, live=False, in_progress=False):
     """Get the next slot. live is whether or not we may start mid charge. Eg: For the next slot end sensor, we dont have the
        start but still want the end of the in progress session, but for the slot list sensor we only want slots that have
        a start AND an end."""
@@ -31,6 +31,11 @@ def _next_slot(data, live=False):
         if delta > 10 and not start_ts:
             # 1s added here as it otherwise often rounds down to xx:59:59
             start_ts = data[idx]["t"] + 1
+        
+        # If we are working live, in a time slot and haven't seen an end yet,
+        # disregard.
+        if start_ts and live and in_progress and not end_ts:
+            start_ts = None
 
         # Take the first delta of 0 as the end
         if delta == 0 and data[idx]["y"] != 0 and (start_ts or live) and not end_ts:
@@ -46,6 +51,7 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
     """Get the next charge slot start/end times from a list of graph points."""
     now = int(time())
     data = points if skip_format else _format_charge_graph(charge_start, points)
+    in_progress = charge_graph_in_slot(charge_start, data, skip_format=True)
 
     # Filter to points from now onwards
     data = [x for x in data if x["t"] > now]
@@ -54,7 +60,7 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
     if len(data) < 2:
         return {"start": None, "end": None}
 
-    start_ts, end_ts, final_idx = _next_slot(data, live=True)
+    start_ts, end_ts, _ = _next_slot(data, live=True, in_progress=in_progress)
 
     # These need to be presented with tzinfo or Home Assistant will reject them
     return {
@@ -65,7 +71,6 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
 
 def charge_graph_slot_list(charge_start, points, skip_format=False):
     """Get list of charge slots from graph points."""
-    now = int(time())
     data = points if skip_format else _format_charge_graph(charge_start, points)
 
     # Give up if we have less than 2 points

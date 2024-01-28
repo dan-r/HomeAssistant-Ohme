@@ -2,6 +2,8 @@ from time import time
 from datetime import datetime, timedelta
 from .const import DOMAIN, DATA_OPTIONS
 import pytz
+# import logging
+# _LOGGER = logging.getLogger(__name__)
 
 def _format_charge_graph(charge_start, points):
     """Convert relative time in points array to real timestamp (s)."""
@@ -11,6 +13,30 @@ def _format_charge_graph(charge_start, points):
     # _LOGGER.debug("Charge slot graph points: " + str([{"t": datetime.fromtimestamp(x["x"] + charge_start).strftime('%H:%M:%S'), "y": x["y"]} for x in points]))
 
     return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
+
+
+def _sanitise_points(points):
+    """Discard any points that aren't on a quarter-hour boundary."""
+    output = []
+    seen = []
+
+    points.reverse()
+
+    for point in points:
+        # Round up the timestamp and get the minute
+        ts = point['t'] + 30
+        dt = datetime.fromtimestamp(ts)
+        hm = dt.strftime('%H:%M')
+        m = int(dt.strftime('%M'))
+
+        if m % 15 == 0 and hm not in seen:
+            output.append(point)
+            seen.append(hm)
+
+    output.reverse()
+    # _LOGGER.warning("Charge slot graph points: " + str([{"t": datetime.fromtimestamp(x["t"] + 30).strftime('%H:%M:%S'), "y": x["y"]} for x in output]))
+
+    return output
 
 
 def _next_slot(data, live=False, in_progress=False):
@@ -24,6 +50,7 @@ def _next_slot(data, live=False, in_progress=False):
     for idx in range(0, len(data) - 1):
         # Calculate the delta between this element and the next
         delta = data[idx + 1]["y"] - data[idx]["y"]
+        delta = 0 if delta < 0 else delta # Zero floor deltas
 
         # If the next point has a Y delta of 10+, consider this the start of a slot
         # This should be 0+ but I had some strange results in testing... revisit
@@ -71,6 +98,7 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
 def charge_graph_slot_list(charge_start, points, skip_format=False):
     """Get list of charge slots from graph points."""
     data = points if skip_format else _format_charge_graph(charge_start, points)
+    data = _sanitise_points(data)
 
     # Give up if we have less than 2 points
     if len(data) < 2:

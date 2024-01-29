@@ -42,6 +42,16 @@ def _sanitise_points(points):
     return output
 
 
+def _charge_finished(data):
+    """Is the charge finished?"""
+    now = int(time())
+    data = [x['y'] for x in data if x["t"] > now]
+
+    if min(data) == max(data):
+        return True
+    return False
+
+
 def _next_slot(data, live=False, in_progress=False):
     """Get the next slot. live is whether or not we may start mid charge. Eg: For the next slot end sensor, we dont have the
        start but still want the end of the in progress session, but for the slot list sensor we only want slots that have
@@ -101,6 +111,11 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
 def charge_graph_slot_list(charge_start, points, skip_format=False):
     """Get list of charge slots from graph points."""
     data = points if skip_format else _format_charge_graph(charge_start, points)
+
+    # Don't return any slots if charge is over
+    if _charge_finished(data):
+        return []
+
     data = _sanitise_points(data)
 
     # Give up if we have less than 2 points

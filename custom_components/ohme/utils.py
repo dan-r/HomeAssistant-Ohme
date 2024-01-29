@@ -2,19 +2,57 @@ from time import time
 from datetime import datetime, timedelta
 from .const import DOMAIN, DATA_OPTIONS
 import pytz
+# import logging
+# _LOGGER = logging.getLogger(__name__)
 
 def _format_charge_graph(charge_start, points):
     """Convert relative time in points array to real timestamp (s)."""
 
-    # Add 30s to effectively round all times to the nearest minute
-    charge_start = round(charge_start / 1000) + 30
+    charge_start = round(charge_start / 1000)
 
     # _LOGGER.debug("Charge slot graph points: " + str([{"t": datetime.fromtimestamp(x["x"] + charge_start).strftime('%H:%M:%S'), "y": x["y"]} for x in points]))
 
     return [{"t": x["x"] + charge_start, "y": x["y"]} for x in points]
 
 
-def _next_slot(data, live=False):
+def _sanitise_points(points):
+    """Discard any points that aren't on a quarter-hour boundary."""
+    output = []
+    seen = []
+    high = max([x['y'] for x in points])
+
+    points.reverse()
+
+    for point in points:
+        # Round up the timestamp and get the minute
+        ts = point['t'] + 30
+        dt = datetime.fromtimestamp(ts)
+        hm = dt.strftime('%H:%M')
+        m = int(dt.strftime('%M'))
+
+        # If this point is on a 15m boundary and we haven't seen this time before
+        # OR y == yMax - so we don't miss the end of the last slot
+        if (m % 15 == 0 and hm not in seen) or point['y'] == high:
+            output.append(point)
+            seen.append(hm)
+
+    output.reverse()
+    # _LOGGER.warning("Charge slot graph points: " + str([{"t": datetime.fromtimestamp(x["t"] + 30).strftime('%H:%M:%S'), "y": x["y"]} for x in output]))
+
+    return output
+
+
+def _charge_finished(data):
+    """Is the charge finished?"""
+    now = int(time())
+    data = [x['y'] for x in data if x["t"] > now]
+
+    if min(data) == max(data):
+        return True
+    return False
+
+
+def _next_slot(data, live=False, in_progress=False):
     """Get the next slot. live is whether or not we may start mid charge. Eg: For the next slot end sensor, we dont have the
        start but still want the end of the in progress session, but for the slot list sensor we only want slots that have
        a start AND an end."""
@@ -25,15 +63,21 @@ def _next_slot(data, live=False):
     for idx in range(0, len(data) - 1):
         # Calculate the delta between this element and the next
         delta = data[idx + 1]["y"] - data[idx]["y"]
+        delta = 0 if delta < 0 else delta # Zero floor deltas
 
         # If the next point has a Y delta of 10+, consider this the start of a slot
         # This should be 0+ but I had some strange results in testing... revisit
         if delta > 10 and not start_ts:
             # 1s added here as it otherwise often rounds down to xx:59:59
             start_ts = data[idx]["t"] + 1
+        
+        # If we are working live, in a time slot and haven't seen an end yet,
+        # disregard.
+        if start_ts and live and in_progress and not end_ts:
+            start_ts = None
 
         # Take the first delta of 0 as the end
-        if delta == 0 and (start_ts or live) and not end_ts:
+        if delta == 0 and data[idx]["y"] != 0 and (start_ts or live) and not end_ts:
             end_ts = data[idx]["t"] + 1
 
         if start_ts and end_ts:
@@ -46,6 +90,7 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
     """Get the next charge slot start/end times from a list of graph points."""
     now = int(time())
     data = points if skip_format else _format_charge_graph(charge_start, points)
+    in_progress = charge_graph_in_slot(charge_start, data, skip_format=True)
 
     # Filter to points from now onwards
     data = [x for x in data if x["t"] > now]
@@ -54,7 +99,7 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
     if len(data) < 2:
         return {"start": None, "end": None}
 
-    start_ts, end_ts, final_idx = _next_slot(data, live=True)
+    start_ts, end_ts, _ = _next_slot(data, live=True, in_progress=in_progress)
 
     # These need to be presented with tzinfo or Home Assistant will reject them
     return {
@@ -65,8 +110,13 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
 
 def charge_graph_slot_list(charge_start, points, skip_format=False):
     """Get list of charge slots from graph points."""
-    now = int(time())
     data = points if skip_format else _format_charge_graph(charge_start, points)
+
+    # Don't return any slots if charge is over
+    if _charge_finished(data):
+        return []
+
+    data = _sanitise_points(data)
 
     # Give up if we have less than 2 points
     if len(data) < 2:
@@ -80,13 +130,13 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
         result = _next_slot(data)
 
         # Break if we fail
-        if result[0] is None:
+        if result[0] is None or result[1] is None:
             break
         
         # Append a tuple to the slots list with the start end end time
         slots.append((
-            datetime.fromtimestamp(result[0]).strftime('%H:%M'),
-            datetime.fromtimestamp(result[1]).strftime('%H:%M'),
+            datetime.fromtimestamp(result[0] + 1).strftime('%H:%M'),
+            datetime.fromtimestamp(result[1] + 1).strftime('%H:%M'),
         ))
 
         # Cut off where we got to in this iteration for next time

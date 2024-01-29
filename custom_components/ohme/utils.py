@@ -119,10 +119,9 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
             break
         
         # Append a tuple to the slots list with the start end end time
-        # Add 30s to each time to round to the next minute
         slots.append((
-            datetime.fromtimestamp(result[0] + 30).strftime('%H:%M'),
-            datetime.fromtimestamp(result[1] + 30).strftime('%H:%M'),
+            datetime.fromtimestamp(result[0] + 1).strftime('%H:%M'),
+            datetime.fromtimestamp(result[1] + 1).strftime('%H:%M'),
         ))
 
         # Cut off where we got to in this iteration for next time

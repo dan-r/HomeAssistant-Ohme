@@ -57,6 +57,7 @@ This integration exposes the following entities:
 * Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
+    * Battery State of Charge (%) - If your car is API connected this is read from the car, if not it is how much charge Ohme thinks it has added
 * Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge

@@ -8,9 +8,10 @@ from homeassistant.components.sensor import (
 )
 import json
 import hashlib
+import math
 import logging
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent, UnitOfElectricPotential
+from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent, UnitOfElectricPotential, PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
@@ -40,7 +41,8 @@ async def async_setup_entry(
                EnergyUsageSensor(stats_coordinator, hass, client),
                NextSlotEndSensor(coordinator, hass, client),
                NextSlotStartSensor(coordinator, hass, client),
-               SlotListSensor(coordinator, hass, client)]
+               SlotListSensor(coordinator, hass, client),
+               BatterySOCSensor(coordinator, hass, client)]
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -433,3 +435,57 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
             
         self._last_updated = utcnow()
         self.async_write_ha_state()
+
+
+class BatterySOCSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+    """Sensor for car battery SOC."""
+    _attr_name = "Battery SOC"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_device_class = SensorDeviceClass.BATTERY
+    _attr_suggested_display_precision = 0
+
+    def __init__(
+            self,
+            coordinator: OhmeChargeSessionsCoordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+        self._attributes = {}
+        self._last_updated = None
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_battery_soc", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("battery_soc")
+
+    @property
+    def icon(self):
+        """Icon of the sensor. Round up to the nearest 10% icon."""
+        nearest = math.ceil((self._state or 0) / 10.0) * 10
+        if nearest == 0:
+            return "mdi:battery-outline"
+        elif nearest == 100:
+            return "mdi:battery"
+        else:
+            return "mdi:battery-" + str(nearest)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Get value from data returned from API by coordinator"""
+        if self.coordinator.data and self.coordinator.data['car'] and self.coordinator.data['car']['batterySoc']:
+            self._state = self.coordinator.data['car']['batterySoc']['percent']
+
+            self._last_updated = utcnow()
+            self.async_write_ha_state()
+
+    @property
+    def native_value(self):
+        return self._state

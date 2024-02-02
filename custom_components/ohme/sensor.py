@@ -38,7 +38,7 @@ async def async_setup_entry(
                CurrentDrawSensor(coordinator, hass, client),
                VoltageSensor(coordinator, hass, client),
                CTSensor(adv_coordinator, hass, client),
-               EnergyUsageSensor(stats_coordinator, hass, client),
+               EnergyUsageSensor(coordinator, stats_coordinator, hass, client),
                NextSlotEndSensor(coordinator, hass, client),
                NextSlotStartSensor(coordinator, hass, client),
                SlotListSensor(coordinator, hass, client),
@@ -213,7 +213,7 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
         return self.coordinator.data['clampAmps']
 
 
-class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
+class EnergyUsageSensor(SensorEntity):
     """Sensor for total energy usage."""
     _attr_name = "Accumulative Energy Usage"
     _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
@@ -224,12 +224,16 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
 
     def __init__(
             self,
-            coordinator: OhmeStatisticsCoordinator,
+            coordinator_sessions,
+            coordinator_statistics,
             hass: HomeAssistant,
             client):
-        super().__init__(coordinator=coordinator)
+        self.coordinator_statistics = coordinator_statistics
+        self.coordinator_sessions = coordinator_sessions
 
         self._state = None
+        self._stats_state = None
+
         self._attributes = {}
         self._last_updated = None
         self._client = client
@@ -239,6 +243,55 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
 
         self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
         )
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass."""
+        self.async_on_remove(
+            self.coordinator_sessions.async_add_listener(
+                self._handle_sessions_update, None
+            )
+        )
+        self.async_on_remove(
+            self.coordinator_statistics.async_add_listener(
+                self._handle_statistics_update, None
+            )
+        )
+
+        self._handle_sessions_update()
+        self._handle_statistics_update()
+
+    @callback
+    def _handle_statistics_update(self) -> None:
+        """Handle updated statistics (all time) data."""
+        # Guard
+        if self.coordinator_statistics.data is None or self.coordinator_sessions.data is None or not self.coordinator_statistics.data['energyChargedTotalWh']:
+            _LOGGER.debug(f"Stats: not enough data")
+            return
+
+        # Store the stats state
+        self._stats_state = self.coordinator_statistics.data['energyChargedTotalWh']
+
+        # If session not in progress, use the statistics data alone
+        if self.coordinator_sessions.data["mode"] == "DISCONNECTED" or self.coordinator_sessions.data["mode"] == "FINISHED_CHARGE":
+            _LOGGER.debug(f"Stats: using stats data only")
+            self._state = self._stats_state
+            self._last_updated = utcnow()
+            self.async_write_ha_state()
+
+    @callback
+    def _handle_sessions_update(self) -> None:
+        """Handle updated charge sessions (live data)."""
+        # Guard
+        if self.coordinator_sessions.data is None or self.coordinator_statistics.data is None or not self.coordinator_sessions.data['batterySoc']:
+            _LOGGER.debug(f"Sessions: not enough data")
+            return
+
+        # If session in progress, use statistics + charge data
+        if self._stats_state and not (self.coordinator_sessions.data["mode"] == "DISCONNECTED" or self.coordinator_sessions.data["mode"] == "FINISHED_CHARGE"):
+            _LOGGER.debug(f"Sessions: using stats + session")
+            self._state = self._stats_state + max(0, self.coordinator_sessions.data['batterySoc']['wh'])
+            self._last_updated = utcnow()
+            self.async_write_ha_state()
 
     @property
     def unique_id(self) -> str:
@@ -252,11 +305,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEnti
 
     @property
     def native_value(self):
-        """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['energyChargedTotalWh']:
-            return self.coordinator.data['energyChargedTotalWh']
-
-        return None
+        return self._state
 
 
 class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):

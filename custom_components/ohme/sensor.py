@@ -246,6 +246,7 @@ class EnergyUsageSensor(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
+        # Handle the coordinator listeners manually as we have 2
         self.async_on_remove(
             self.coordinator_sessions.async_add_listener(
                 self._handle_sessions_update, None
@@ -257,6 +258,7 @@ class EnergyUsageSensor(SensorEntity):
             )
         )
 
+        # Stats only run every hour so make sure they run at init
         self._handle_sessions_update()
         self._handle_statistics_update()
 
@@ -272,7 +274,7 @@ class EnergyUsageSensor(SensorEntity):
         self._stats_state = self.coordinator_statistics.data['energyChargedTotalWh']
 
         # If session not in progress, use the statistics data alone
-        if self.coordinator_sessions.data["mode"] == "DISCONNECTED" or self.coordinator_sessions.data["mode"] == "FINISHED_CHARGE":
+        if self.coordinator_sessions.data["mode"] == "DISCONNECTED":
             _LOGGER.debug(f"Stats: using stats data only")
             self._state = self._stats_state
             self._last_updated = utcnow()
@@ -287,9 +289,14 @@ class EnergyUsageSensor(SensorEntity):
             return
 
         # If session in progress, use statistics + charge data
-        if self._stats_state and not (self.coordinator_sessions.data["mode"] == "DISCONNECTED" or self.coordinator_sessions.data["mode"] == "FINISHED_CHARGE"):
+        if self._stats_state and not self.coordinator_sessions.data["mode"] == "DISCONNECTED":
             _LOGGER.debug(f"Sessions: using stats + session")
-            self._state = self._stats_state + max(0, self.coordinator_sessions.data['batterySoc']['wh'])
+            # Calculate new state as stats total + session total
+            new_state = self._stats_state + max(0, self.coordinator_sessions.data['batterySoc']['wh'])
+
+            # This tends to go backwards? Make sure it only goes up
+            self._state = max(self._state or 0, new_state)
+
             self._last_updated = utcnow()
             self.async_write_ha_state()
 
@@ -530,7 +537,7 @@ class BatterySOCSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorE
     def _handle_coordinator_update(self) -> None:
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data and self.coordinator.data['car'] and self.coordinator.data['car']['batterySoc']:
-            self._state = self.coordinator.data['car']['batterySoc']['percent']
+            self._state = self.coordinator.data['car']['batterySoc']['percent'] or self.coordinator.data['batterySoc']['percent']
 
             self._last_updated = utcnow()
             self.async_write_ha_state()

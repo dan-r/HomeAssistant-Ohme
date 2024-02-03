@@ -38,7 +38,8 @@ async def async_setup_entry(
                CurrentDrawSensor(coordinator, hass, client),
                VoltageSensor(coordinator, hass, client),
                CTSensor(adv_coordinator, hass, client),
-               EnergyUsageSensor(coordinator, stats_coordinator, hass, client),
+               EnergyUsageSensor(coordinator, hass, client),
+               AccumulativeEnergyUsageSensor(coordinator, stats_coordinator, hass, client),
                NextSlotEndSensor(coordinator, hass, client),
                NextSlotStartSensor(coordinator, hass, client),
                SlotListSensor(coordinator, hass, client),
@@ -213,7 +214,7 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
         return self.coordinator.data['clampAmps']
 
 
-class EnergyUsageSensor(SensorEntity):
+class AccumulativeEnergyUsageSensor(SensorEntity):
     """Sensor for total energy usage."""
     _attr_name = "Accumulative Energy Usage"
     _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
@@ -309,6 +310,55 @@ class EnergyUsageSensor(SensorEntity):
     def icon(self):
         """Icon of the sensor."""
         return "mdi:lightning-bolt"
+
+    @property
+    def native_value(self):
+        return self._state
+
+
+class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+    """Sensor for total energy usage."""
+    _attr_name = "Session Energy Usage"
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_suggested_display_precision = 1
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL
+
+    def __init__(
+            self,
+            coordinator,
+            hass: HomeAssistant,
+            client):
+        super().__init__(coordinator=coordinator)
+
+        self._state = None
+
+        self._attributes = {}
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "sensor.{}", "ohme_session_energy", hass=hass)
+
+        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        # Ensure we have data, then ensure value is going up and above 0
+        if self.coordinator.data and self.coordinator.data['batterySoc']:
+            self._state = max(0, self._state or 0, self.coordinator.data['batterySoc']['wh'])
+
+            self.async_write_ha_state()
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID of the sensor."""
+        return self._client.get_unique_id("session_energy")
+
+    @property
+    def icon(self):
+        """Icon of the sensor."""
+        return "mdi:lightning-bolt-circle"
 
     @property
     def native_value(self):

@@ -290,7 +290,13 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
     def _handle_coordinator_update(self) -> None:
         # Ensure we have data, then ensure value is going up and above 0
         if self.coordinator.data and self.coordinator.data['batterySoc']:
-            self._state = max(0, self._state or 0, self.coordinator.data['batterySoc']['wh'])
+            new_state = self.coordinator.data['batterySoc']['wh']
+
+            # Let the state reset to 0, but not drop otherwise
+            if new_state <= 0:
+                self._state = 0
+            else:
+                self._state = max(0, self._state or 0, new_state)
 
             self.async_write_ha_state()
 

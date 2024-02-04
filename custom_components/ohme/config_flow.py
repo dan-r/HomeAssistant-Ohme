@@ -43,19 +43,36 @@ class OhmeOptionsFlow(OptionsFlow):
     def __init__(self, entry) -> None:
         self._config_entry = entry
 
-    async def async_step_init(self, info):
+    async def async_step_init(self, options):
         errors = {}
-        if info is not None:
-            instance = OhmeApiClient(info['email'], info['password'])
-            if await instance.async_refresh_session() is None:
-                errors["base"] = "auth_error"
-            else:
+        # If form filled
+        if options is not None:
+            data = self._config_entry.data
+
+            # Update credentials
+            if 'email' in options and 'password' in options:
+                instance = OhmeApiClient(options['email'], options['password'])
+                if await instance.async_refresh_session() is None:
+                    errors["base"] = "auth_error"
+                else:
+                    data['email'] = options['email']
+                    data['password'] = options['password']
+
+            # If we have no errors, update the data array
+            if len(errors) == 0:
+                # Don't store email and password in options
+                options.pop('email', None)
+                options.pop('password', None)
+
+                # Update data
                 self.hass.config_entries.async_update_entry(
-                    self._config_entry, data=info
+                    self._config_entry, data=data
                 )
+
+                # Update options
                 return self.async_create_entry(
                     title="",
-                    data={}
+                    data=options
                 )
 
         return self.async_show_form(
@@ -64,8 +81,11 @@ class OhmeOptionsFlow(OptionsFlow):
                         vol.Required(
                             "email", default=self._config_entry.data['email']
                         ): str,
-                        vol.Required(
+                        vol.Optional(
                             "password"
-                        ): str
+                        ): str,
+                        vol.Required(
+                            "never_session_specific", default=self._config_entry.options.get("never_session_specific", False)
+                        ) : bool
                     }), errors=errors
         )

@@ -30,7 +30,8 @@ async def async_setup_entry(
     client = hass.data[DOMAIN][DATA_CLIENT]
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),
-                OhmeMaxChargeSwitch(coordinator, hass, client)]
+                OhmeMaxChargeSwitch(coordinator, hass, client),
+                OhmePriceCapSwitch(accountinfo_coordinator, hass, client)]
 
     if client.is_capable("buttonsLockable"):
         switches.append(
@@ -220,6 +221,57 @@ class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Swi
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_set_configuration_value({self._config_key: False})
+
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
+
+
+class OhmePriceCapSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
+    """Switch for enabling price cap."""
+    _attr_name = "Enable Price Cap"
+
+    def __init__(self, coordinator, hass: HomeAssistant, client):
+        super().__init__(coordinator=coordinator)
+
+        self._client = client
+
+        self.entity_id = generate_entity_id(
+            "switch.{}", "ohme_price_cap_enabled", hass=hass)
+
+        self._attr_device_info = client.get_device_info()
+
+    @property
+    def unique_id(self):
+        """The unique ID of the switch."""
+        return self._client.get_unique_id("price_cap_enabled")
+
+    @property
+    def icon(self):
+        """Icon of the switch."""
+        return f"mdi:car-speed-limiter"
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Determine configuration value."""
+        if self.coordinator.data is None:
+            self._attr_is_on = None
+        else:
+            self._attr_is_on = bool(self.coordinator.data["userSettings"]["chargeSettings"][0]["enabled"])
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()
+
+    async def async_turn_on(self):
+        """Turn on the switch."""
+        await self._client.async_change_price_cap(enabled=True)
+
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
+
+    async def async_turn_off(self):
+        """Turn off the switch."""
+        await self._client.async_change_price_cap(enabled=False)
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

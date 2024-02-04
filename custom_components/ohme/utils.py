@@ -47,7 +47,7 @@ def _charge_finished(data):
     now = int(time())
     data = [x['y'] for x in data if x["t"] > now]
 
-    if min(data) == max(data):
+    if len(data) == 0 or min(data) == max(data):
         return True
     return False
 

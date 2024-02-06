@@ -142,7 +142,7 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
             {
                 "start": datetime.fromtimestamp(result[0]),
                 "end": datetime.fromtimestamp(result[1]),
-                "charge_in_kwh": result[3] / 1000,
+                "charge_in_kwh": -(result[3] / 1000),
                 "source": "smart-charge",
                 "location": None
             }

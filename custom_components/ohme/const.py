@@ -8,6 +8,7 @@ ENTITY_TYPES = ["sensor", "binary_sensor", "switch", "button", "number", "time"]
 DATA_CLIENT = "client"
 DATA_COORDINATORS = "coordinators"
 DATA_OPTIONS = "options"
+DATA_SLOTS = "slots"
 
 COORDINATOR_CHARGESESSIONS = 0
 COORDINATOR_ACCOUNTINFO = 1

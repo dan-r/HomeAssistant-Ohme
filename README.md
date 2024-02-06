@@ -57,6 +57,8 @@ This integration exposes the following entities:
 * Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
     * Accumulative Energy Usage (kWh) - Total energy used by the charger
+    * Session Energy Usage (kWh) - Energy used in the current session
+    * Battery State of Charge (%) - If your car is API connected this is read from the car, if not it is how much charge Ohme thinks it has added
 * Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge
@@ -88,7 +90,7 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
 * OhmeChargeSessionsCoordinator (30s refresh)
     * Binary Sensors: Car connected, car charging, pending approval and charge slot active
     * Buttons: Approve Charge
-    * Sensors: Power, current, voltage, charge slots and next slot (start & end)
+    * Sensors: Power, current, voltage, session energy usage, charge slots, and next slot (start & end)
     * Switches: Max charge, pause charge
     * Inputs: Target time, target percentage and preconditioning (If car connected)
 * OhmeAccountInfoCoordinator (1m refresh)

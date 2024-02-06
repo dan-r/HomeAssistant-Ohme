@@ -27,6 +27,7 @@ class OhmeApiClient:
         self._device_info = None
         self._capabilities = {}
         self._ct_connected = False
+        self._provision_date = None
 
         # Authentication
         self._token_birth = 0
@@ -312,13 +313,14 @@ class OhmeApiClient:
         self._user_id = resp['user']['id']
         self._serial = device['id']
         self._device_info = info
+        self._provision_date = device['provisioningTs']
 
         return True
 
     async def async_get_charge_statistics(self):
         """Get charge statistics. Currently this is just for all time (well, Jan 2019)."""
         end_ts = self._last_second_of_month_timestamp()
-        resp = await self._get_request(f"/v1/chargeSessions/summary/users/{self._user_id}?&startTs=1546300800000&endTs={end_ts}&granularity=MONTH")
+        resp = await self._get_request(f"/v1/chargeSessions/summary/users/{self._user_id}?&startTs={self._provision_date}&endTs={end_ts}&granularity=MONTH")
 
         return resp['totalStats']
 

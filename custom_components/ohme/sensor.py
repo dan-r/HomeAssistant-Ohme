@@ -10,6 +10,7 @@ import json
 import hashlib
 import math
 import logging
+from datetime import datetime
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent, UnitOfElectricPotential, PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
@@ -432,6 +433,7 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         super().__init__(coordinator=coordinator)
 
         self._state = None
+        self._slots = []
         self._attributes = {}
         self._last_updated = None
         self._client = client
@@ -457,6 +459,16 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         """Return pre-calculated state."""
         return self._state
 
+    @property
+    def extra_state_attributes(self):
+        """Attributes of the sensor."""
+        now = datetime.now()
+
+        return {
+            "planned_dispatches": [x for x in self._slots if not x['end'] or x['end'] > now],
+            "completed_dispatches": [x for x in self._slots if x['end'] < now]
+        }
+
     def _hash_rule(self):
         """Generate a hashed representation of the current charge rule."""
         serial = json.dumps(self.coordinator.data['appliedRule'], sort_keys=True)
@@ -477,11 +489,11 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
                 _LOGGER.debug("Slot evaluation skipped - rule has not changed")
                 return
             
-            slots = charge_graph_slot_list(
+            self._slots = charge_graph_slot_list(
                 self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
 
-            # Convert list of tuples to text
-            self._state = reduce(lambda acc, slot: acc + f"{slot[0]}-{slot[1]}, ", slots, "")[:-2]
+            # Convert list to text
+            self._state = reduce(lambda acc, slot: acc + f"{slot['start'].strftime('%H:%M')}-{slot['end'].strftime('%H:%M')}, ", self._slots, "")[:-2]
 
             # Make sure we return None/Unknown if the list is empty
             self._state = None if self._state == "" else self._state

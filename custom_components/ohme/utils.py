@@ -140,8 +140,8 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
         # Append a dict to the slots list with the start and end time
         slots.append(
             {
-                "start": datetime.fromtimestamp(result[0]),
-                "end": datetime.fromtimestamp(result[1]),
+                "start": datetime.utcfromtimestamp(result[0]).replace(tzinfo=pytz.utc),
+                "end": datetime.utcfromtimestamp(result[1]).replace(tzinfo=pytz.utc),
                 "charge_in_kwh": -(result[3] / 1000),
                 "source": "smart-charge",
                 "location": None

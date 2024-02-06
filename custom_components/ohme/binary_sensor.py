@@ -5,7 +5,6 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity
 )
-from datetime import datetime
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
@@ -294,7 +293,7 @@ class CurrentSlotBinarySensor(
     @property
     def extra_state_attributes(self):
         """Attributes of the sensor."""
-        now = datetime.now()
+        now = utcnow()
         slots = self._hass.data[DOMAIN][DATA_SLOTS] if DATA_SLOTS in self._hass.data[DOMAIN] else []
 
         return {

@@ -15,7 +15,7 @@ from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import charge_graph_next_slot, charge_graph_slot_list
 
@@ -432,9 +432,10 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         super().__init__(coordinator=coordinator)
 
         self._state = None
-        self._attributes = {}
+        self._slots = []
         self._last_updated = None
         self._client = client
+        self._hass = hass
 
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_charge_slots", hass=hass)
@@ -469,6 +470,7 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED" or self.coordinator.data["mode"] == "FINISHED_CHARGE":
             self._state = None
             self._last_hash = None
+            self._hass.data[DOMAIN][DATA_SLOTS] = []
         else:
             rule_hash = self._hash_rule()
 
@@ -479,9 +481,12 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
             
             slots = charge_graph_slot_list(
                 self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+            
+            # Store slots for external use
+            self._hass.data[DOMAIN][DATA_SLOTS] = slots
 
-            # Convert list of tuples to text
-            self._state = reduce(lambda acc, slot: acc + f"{slot[0]}-{slot[1]}, ", slots, "")[:-2]
+            # Convert list to text
+            self._state = reduce(lambda acc, slot: acc + f"{slot['start'].strftime('%H:%M')}-{slot['end'].strftime('%H:%M')}, ", slots, "")[:-2]
 
             # Make sure we return None/Unknown if the list is empty
             self._state = None if self._state == "" else self._state

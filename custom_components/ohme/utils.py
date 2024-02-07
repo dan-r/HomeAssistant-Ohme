@@ -57,7 +57,9 @@ def _next_slot(data, live=False, in_progress=False):
        start but still want the end of the in progress session, but for the slot list sensor we only want slots that have
        a start AND an end."""
     start_ts = None
+    start_ts_y = 0
     end_ts = None
+    end_ts_y = 0
 
     # Loop through every remaining value, skipping the last
     for idx in range(0, len(data) - 1):
@@ -70,6 +72,7 @@ def _next_slot(data, live=False, in_progress=False):
         if delta > 10 and not start_ts:
             # 1s added here as it otherwise often rounds down to xx:59:59
             start_ts = data[idx]["t"] + 1
+            start_ts_y = data[idx]["y"]
         
         # If we are working live, in a time slot and haven't seen an end yet,
         # disregard.
@@ -79,11 +82,12 @@ def _next_slot(data, live=False, in_progress=False):
         # Take the first delta of 0 as the end
         if delta == 0 and data[idx]["y"] != 0 and (start_ts or live) and not end_ts:
             end_ts = data[idx]["t"] + 1
+            end_ts_y = data[idx]["y"]
 
         if start_ts and end_ts:
             break
     
-    return [start_ts, end_ts, idx]
+    return [start_ts, end_ts, idx, end_ts_y - start_ts_y]
 
 
 def charge_graph_next_slot(charge_start, points, skip_format=False):
@@ -99,7 +103,7 @@ def charge_graph_next_slot(charge_start, points, skip_format=False):
     if len(data) < 2:
         return {"start": None, "end": None}
 
-    start_ts, end_ts, _ = _next_slot(data, live=True, in_progress=in_progress)
+    start_ts, end_ts, _, _ = _next_slot(data, live=True, in_progress=in_progress)
 
     # These need to be presented with tzinfo or Home Assistant will reject them
     return {
@@ -133,11 +137,16 @@ def charge_graph_slot_list(charge_start, points, skip_format=False):
         if result[0] is None or result[1] is None:
             break
         
-        # Append a tuple to the slots list with the start end end time
-        slots.append((
-            datetime.fromtimestamp(result[0] + 1).strftime('%H:%M'),
-            datetime.fromtimestamp(result[1] + 1).strftime('%H:%M'),
-        ))
+        # Append a dict to the slots list with the start and end time
+        slots.append(
+            {
+                "start": datetime.utcfromtimestamp(result[0]).replace(tzinfo=pytz.utc),
+                "end": datetime.utcfromtimestamp(result[1]).replace(tzinfo=pytz.utc),
+                "charge_in_kwh": -(result[3] / 1000),
+                "source": "smart-charge",
+                "location": None
+            }
+        )
 
         # Cut off where we got to in this iteration for next time
         data = data[result[2]:]
@@ -165,9 +174,8 @@ def charge_graph_in_slot(charge_start, points, skip_format=False):
 
 def time_next_occurs(hour, minute):
     """Find when this time next occurs."""
-    current = datetime.now()
     target = current.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    while target <= current:
+    if target <= datetime.now():
         target = target + timedelta(days=1)
 
     return target

@@ -1,16 +1,20 @@
 # Ohme EV Charger for Home Assistant
 
-An integration for interacting with Ohme EV Chargers.
+An unofficial integration for interacting with Ohme EV Chargers. I have no affiliation with Ohme besides owning one of their EV chargers.
 
-This is an unofficial integration. I have no affiliation with Ohme besides owning one of their EV chargers.
+This integration does not currently support accounts with multiple chargers.
 
-This integration does not currently support social login or accounts with multiple chargers. It has been tested with the following hardware:
+If you find any bugs or would like to request a feature, please open an issue.
+
+## Tested Hardware
+This integration has been tested with the following hardware:
 * Ohme Home Pro [v1.32]
 * Ohme Home [v1.32]
 * Ohme Go [v1.32]
 * Ohme ePod [v2.12]
 
-If you find any bugs or would like to request a feature, please open an issue.
+## External Software
+The 'Charge Slot Active' binary sensor mimics the `planned_dispatches` and `completed_dispatches` attributes from the [Octopus Energy](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy) integration, so should support external software which reads this such as [predbat](https://github.com/springfall2008/batpred).
 
 
 ## Installation

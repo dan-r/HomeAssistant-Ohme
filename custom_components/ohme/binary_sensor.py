@@ -9,7 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED, DATA_CLIENT
+from .const import DOMAIN, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED, DATA_CLIENT
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import charge_graph_in_slot
 
@@ -269,10 +269,10 @@ class CurrentSlotBinarySensor(
             client):
         super().__init__(coordinator=coordinator)
 
-        self._attributes = {}
         self._last_updated = None
         self._state = False
         self._client = client
+        self._hass = hass
 
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_slot_active", hass=hass)
@@ -289,6 +289,17 @@ class CurrentSlotBinarySensor(
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
         return self._client.get_unique_id("ohme_slot_active")
+
+    @property
+    def extra_state_attributes(self):
+        """Attributes of the sensor."""
+        now = utcnow()
+        slots = self._hass.data[DOMAIN][DATA_SLOTS] if DATA_SLOTS in self._hass.data[DOMAIN] else []
+
+        return {
+            "planned_dispatches": [x for x in slots if not x['end'] or x['end'] > now],
+            "completed_dispatches": [x for x in slots if x['end'] < now]
+        }
 
     @property
     def is_on(self) -> bool:

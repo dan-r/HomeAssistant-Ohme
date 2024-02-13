@@ -60,8 +60,8 @@ This integration exposes the following entities:
     * Next Charge Slot End - The next time your car will stop charging according to the Ohme-generated charge plan
 * Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
-    * Accumulative Energy Usage (kWh) - Total energy used by the charger
     * Session Energy Usage (kWh) - Energy used in the current session
+    * Accumulative Energy Usage (kWh) - Total energy used by the charger (If enabled in options)
     * Battery State of Charge (%) - If your car is API connected this is read from the car, if not it is how much charge Ohme thinks it has added
 * Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger
@@ -84,6 +84,7 @@ This integration exposes the following entities:
 ## Options
 Some options can be set from the 'Configure' menu in Home Assistant:
 * Never update an ongoing session - Override the default behaviour of the target time, percentage and preconditioning inputs and only ever update the schedule, not the current session. This was added as changing the current session can cause issues for customers on Intelligent Octopus Go.
+* Enable accumulative energy usage sensor - Enable the sensor showing an all-time incrementing energy usage counter. This causes issues with some accounts. 
 
 
 ## Coordinators

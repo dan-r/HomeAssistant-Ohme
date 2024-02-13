@@ -86,6 +86,9 @@ class OhmeOptionsFlow(OptionsFlow):
                         ): str,
                         vol.Required(
                             "never_session_specific", default=self._config_entry.options.get("never_session_specific", False)
+                        ) : bool,
+                        vol.Required(
+                            "enable_accumulative_energy", default=self._config_entry.options.get("enable_accumulative_energy", False)
                         ) : bool
                     }), errors=errors
         )

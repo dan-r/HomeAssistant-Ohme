@@ -1,6 +1,7 @@
 import logging
 from homeassistant import core
 from .const import *
+from .utils import get_option
 from .api_client import OhmeApiClient
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAccountInfoCoordinator, OhmeAdvancedSettingsCoordinator, OhmeChargeSchedulesCoordinator
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -25,12 +26,9 @@ async def async_setup_dependencies(hass, entry):
 
 async def async_update_listener(hass, entry):
     """Handle options flow credentials update."""
-    # Re-instantiate the API client
-    await async_setup_dependencies(hass, entry)
-
-    # Refresh all coordinators for good measure
-    for coordinator in hass.data[DOMAIN][DATA_COORDINATORS]:
-        await coordinator.async_refresh()
+    
+    # Reload this instance
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_setup_entry(hass, entry):
@@ -53,7 +51,24 @@ async def async_setup_entry(hass, entry):
         OhmeAdvancedSettingsCoordinator
     ]
 
+    coordinators_skipped = []
+
+    # Skip statistics coordinator if we don't need it
+    if not get_option(hass, "enable_accumulative_energy"):
+        coordinators_skipped.append(OhmeStatisticsCoordinator)
+
     for coordinator in coordinators:
+        # If we should skip this coordinator
+        skip = False
+        for skipped in coordinators_skipped:
+            if isinstance(coordinator, skipped):
+                skip = True
+                break
+        
+        if skip:
+            _LOGGER.debug(f"Skipping initial load of {coordinator.__class__.__name__}")
+            continue
+
         # Catch failures if this is an 'optional' coordinator
         try:
             await coordinator.async_config_entry_first_refresh()

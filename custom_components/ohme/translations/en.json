@@ -22,7 +22,8 @@
         "data": {
           "email": "Email address",
           "password": "Password",
-          "never_session_specific": "Never update an ongoing session"
+          "never_session_specific": "Never update an ongoing session",
+          "enable_accumulative_energy": "Enable accumulative energy sensor"
         },
         "data_description": {
           "password": "If you are not changing your credentials, leave the password field empty.",

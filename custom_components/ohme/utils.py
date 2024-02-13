@@ -199,6 +199,6 @@ def session_in_progress(hass, data):
     return True
 
 
-def get_option(hass, option):
-    """Return option value, default to False."""
-    return hass.data[DOMAIN][DATA_OPTIONS].get(option, None)
+def get_option(hass, option, default=False):
+    """Return option value, with settable default."""
+    return hass.data[DOMAIN][DATA_OPTIONS].get(option, default)

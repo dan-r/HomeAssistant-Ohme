@@ -17,7 +17,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
-from .utils import charge_graph_next_slot, charge_graph_slot_list
+from .utils import charge_graph_next_slot, charge_graph_slot_list, get_option
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,11 +39,13 @@ async def async_setup_entry(
                VoltageSensor(coordinator, hass, client),
                CTSensor(adv_coordinator, hass, client),
                EnergyUsageSensor(coordinator, hass, client),
-               AccumulativeEnergyUsageSensor(stats_coordinator, hass, client),
                NextSlotEndSensor(coordinator, hass, client),
                NextSlotStartSensor(coordinator, hass, client),
                SlotListSensor(coordinator, hass, client),
                BatterySOCSensor(coordinator, hass, client)]
+    
+    if get_option(hass, "enable_accumulative_energy"):
+        sensors.append(AccumulativeEnergyUsageSensor(stats_coordinator, hass, client))
 
     async_add_entities(sensors, update_before_add=True)
 

@@ -293,7 +293,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
             new_state = self.coordinator.data['batterySoc']['wh']
 
             # Let the state reset to 0, but not drop otherwise
-            if new_state <= 0:
+            if not new_state or new_state <= 0:
                 self._state = 0
             else:
                 self._state = max(0, self._state or 0, new_state)

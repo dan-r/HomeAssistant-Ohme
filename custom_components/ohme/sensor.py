@@ -7,7 +7,6 @@ from homeassistant.components.sensor import (
     SensorEntity
 )
 import json
-import hashlib
 import math
 import logging
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -17,7 +16,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
-from .utils import charge_graph_next_slot, charge_graph_slot_list
+from .utils import charge_graph_next_slot, charge_graph_slot_list, get_option
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,11 +38,13 @@ async def async_setup_entry(
                VoltageSensor(coordinator, hass, client),
                CTSensor(adv_coordinator, hass, client),
                EnergyUsageSensor(coordinator, hass, client),
-               AccumulativeEnergyUsageSensor(stats_coordinator, hass, client),
                NextSlotEndSensor(coordinator, hass, client),
                NextSlotStartSensor(coordinator, hass, client),
                SlotListSensor(coordinator, hass, client),
                BatterySOCSensor(coordinator, hass, client)]
+    
+    if get_option(hass, "enable_accumulative_energy"):
+        sensors.append(AccumulativeEnergyUsageSensor(stats_coordinator, hass, client))
 
     async_add_entities(sensors, update_before_add=True)
 
@@ -293,7 +294,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
             new_state = self.coordinator.data['batterySoc']['wh']
 
             # Let the state reset to 0, but not drop otherwise
-            if new_state <= 0:
+            if not new_state or new_state <= 0:
                 self._state = 0
             else:
                 self._state = max(0, self._state or 0, new_state)
@@ -422,7 +423,6 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
 class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for next smart charge slot end time."""
     _attr_name = "Charge Slots"
-    _last_hash = None
 
     def __init__(
             self,
@@ -458,27 +458,13 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         """Return pre-calculated state."""
         return self._state
 
-    def _hash_rule(self):
-        """Generate a hashed representation of the current charge rule."""
-        serial = json.dumps(self.coordinator.data['appliedRule'], sort_keys=True)
-        sha1 = hashlib.sha1(serial.encode('utf-8')).hexdigest()
-        return sha1
-
     @callback
     def _handle_coordinator_update(self) -> None:
         """Get a list of charge slots."""
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED" or self.coordinator.data["mode"] == "FINISHED_CHARGE":
             self._state = None
-            self._last_hash = None
             self._hass.data[DOMAIN][DATA_SLOTS] = []
         else:
-            rule_hash = self._hash_rule()
-
-            # Rule has not changed, no point evaluating slots again
-            if rule_hash == self._last_hash:
-                _LOGGER.debug("Slot evaluation skipped - rule has not changed")
-                return
-            
             slots = charge_graph_slot_list(
                 self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
             
@@ -490,9 +476,6 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
 
             # Make sure we return None/Unknown if the list is empty
             self._state = None if self._state == "" else self._state
-
-            # Store hash of the last rule
-            self._last_hash = self._hash_rule()
             
         self._last_updated = utcnow()
         self.async_write_ha_state()

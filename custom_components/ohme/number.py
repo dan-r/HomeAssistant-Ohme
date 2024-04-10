@@ -197,7 +197,7 @@ class PriceCapNumber(NumberEntity):
     _attr_device_class = NumberDeviceClass.MONETARY
     _attr_mode = NumberMode.BOX
     _attr_native_step = 0.1
-    _attr_native_min_value = 1
+    _attr_native_min_value = -100
     _attr_native_max_value = 100
 
     def __init__(self, coordinator, hass: HomeAssistant, client):

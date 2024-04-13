@@ -34,7 +34,6 @@ class TargetPercentNumber(NumberEntity):
     _attr_device_class = NumberDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_suggested_display_precision = 0
-    _attr_has_entity_name = True
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
         self.coordinator = coordinator
@@ -112,7 +111,6 @@ class PreconditioningNumber(NumberEntity):
     _attr_native_min_value = 0
     _attr_native_step = 5
     _attr_native_max_value = 60
-    _attr_has_entity_name = True
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
         self.coordinator = coordinator
@@ -201,7 +199,6 @@ class PriceCapNumber(NumberEntity):
     _attr_native_step = 0.1
     _attr_native_min_value = -100
     _attr_native_max_value = 100
-    _attr_has_entity_name = True
 
     def __init__(self, coordinator, hass: HomeAssistant, client):
         self.coordinator = coordinator

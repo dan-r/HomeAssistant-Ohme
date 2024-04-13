@@ -34,7 +34,6 @@ async def async_setup_entry(
 class OhmeApproveChargeButton(ButtonEntity):
     """Button for approving a charge."""
     _attr_name = "Approve Charge"
-    _attr_has_entity_name = True
 
     def __init__(self, coordinator: OhmeChargeSessionsCoordinator, hass: HomeAssistant, client):
         self._client = client

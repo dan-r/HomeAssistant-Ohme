@@ -30,7 +30,6 @@ async def async_setup_entry(
 class TargetTime(TimeEntity):
     """Target time sensor."""
     _attr_name = "Target Time"
-    _attr_has_entity_name = True
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
         self.coordinator = coordinator

@@ -31,13 +31,18 @@ async def test_options_flow(hass):
     entry.add_to_hass(hass)
 
     flow = config_flow.OhmeOptionsFlow(entry)
-    result = await flow.async_step_init()
+    result = await config_entry_flow.async_init(
+        hass, flow, context={"source": "test"}, data={}
+    )
 
     assert result["type"] == "form"
     assert result["step_id"] == "init"
     assert result["data_schema"] is not None
 
-    result = await flow.async_step_init(
+    result = await config_entry_flow.async_configure(
+        hass,
+        flow,
+        result["step_id"],
         {
             "email": "test@example.com",
             "password": "password123",

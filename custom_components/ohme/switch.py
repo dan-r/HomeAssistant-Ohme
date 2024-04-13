@@ -55,6 +55,7 @@ async def async_setup_entry(
 class OhmePauseChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):
     """Switch for pausing a charge."""
     _attr_name = "Pause Charge"
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, hass: HomeAssistant, client):
         super().__init__(coordinator=coordinator)
@@ -112,6 +113,7 @@ class OhmePauseChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sw
 class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):
     """Switch for pausing a charge."""
     _attr_name = "Max Charge"
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, hass: HomeAssistant, client):
         super().__init__(coordinator=coordinator)
@@ -170,6 +172,7 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
 
 class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
     """Switch for changing configuration options."""
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, hass: HomeAssistant, client, name, icon, config_key):
         super().__init__(coordinator=coordinator)
@@ -229,6 +232,7 @@ class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Swi
 class OhmePriceCapSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
     """Switch for enabling price cap."""
     _attr_name = "Enable Price Cap"
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator, hass: HomeAssistant, client):
         super().__init__(coordinator=coordinator)

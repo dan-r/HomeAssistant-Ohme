@@ -41,6 +41,7 @@ class ConnectedBinarySensor(
 
     _attr_name = "Car Connected"
     _attr_device_class = BinarySensorDeviceClass.PLUG
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -87,6 +88,7 @@ class ChargingBinarySensor(
 
     _attr_name = "Car Charging"
     _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -215,6 +217,7 @@ class PendingApprovalBinarySensor(
     """Binary sensor for if a charge is pending approval."""
 
     _attr_name = "Pending Approval"
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -261,6 +264,7 @@ class CurrentSlotBinarySensor(
     """Binary sensor for if we are currently in a smart charge slot."""
 
     _attr_name = "Charge Slot Active"
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -327,6 +331,7 @@ class ChargerOnlineBinarySensor(
 
     _attr_name = "Charger Online"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_has_entity_name = True
 
     def __init__(
             self,

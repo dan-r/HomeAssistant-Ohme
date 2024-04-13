@@ -54,6 +54,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEn
     _attr_name = "Power Draw"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -96,6 +97,7 @@ class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
     _attr_name = "Current Draw"
     _attr_device_class = SensorDeviceClass.CURRENT
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -138,6 +140,7 @@ class VoltageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnti
     _attr_name = "Voltage"
     _attr_device_class = SensorDeviceClass.VOLTAGE
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -180,6 +183,7 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
     _attr_name = "CT Reading"
     _attr_device_class = SensorDeviceClass.CURRENT
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -223,6 +227,7 @@ class AccumulativeEnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator]
     _attr_suggested_display_precision = 1
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -269,6 +274,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
     _attr_suggested_display_precision = 1
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -320,6 +326,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
     """Sensor for next smart charge slot start time."""
     _attr_name = "Next Charge Slot Start"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -372,6 +379,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
     """Sensor for next smart charge slot end time."""
     _attr_name = "Next Charge Slot End"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -423,6 +431,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
 class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for next smart charge slot end time."""
     _attr_name = "Charge Slots"
+    _attr_has_entity_name = True
 
     def __init__(
             self,
@@ -487,6 +496,7 @@ class BatterySOCSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorE
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_suggested_display_precision = 0
+    _attr_has_entity_name = True
 
     def __init__(
             self,

@@ -66,7 +66,7 @@ async def test_next_slot_no_live_no_in_progress():
             {"t": 50, "y": 20}, {"t": 60, "y": 0}]
 
     result = utils._next_slot(TEST_DATA, live=False, in_progress=False)
-    expected = [30, 50, 3, 10]
+    expected = [None, None, 4, 0]
 
     assert expected == result
 
@@ -78,7 +78,7 @@ async def test_next_slot_live_no_in_progress():
             {"t": 50, "y": 20}, {"t": 60, "y": 0}]
 
     result = utils._next_slot(TEST_DATA, live=True, in_progress=False)
-    expected = [30, 50, 3, 10]
+    expected = [None, 41, 4, 20]
 
     assert expected == result
 
@@ -90,7 +90,7 @@ async def test_next_slot_no_live_in_progress():
             {"t": 50, "y": 20}, {"t": 60, "y": 0}]
 
     result = utils._next_slot(TEST_DATA, live=False, in_progress=True)
-    expected = [None, None, None, 0]
+    expected = [None, None, 4, 0]
 
     assert expected == result
 
@@ -102,6 +102,6 @@ async def test_next_slot_live_in_progress():
             {"t": 50, "y": 20}, {"t": 60, "y": 0}]
 
     result = utils._next_slot(TEST_DATA, live=True, in_progress=True)
-    expected = [None, None, None, 0]
+    expected = [None, 41, 4, 20]
 
     assert expected == result

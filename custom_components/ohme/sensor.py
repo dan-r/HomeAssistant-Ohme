@@ -6,7 +6,6 @@ from homeassistant.components.sensor import (
     SensorStateClass,
     SensorEntity
 )
-import json
 import math
 import logging
 from homeassistant.helpers.update_coordinator import CoordinatorEntity

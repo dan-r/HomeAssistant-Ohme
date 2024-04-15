@@ -6,7 +6,6 @@ from homeassistant.components.sensor import (
     SensorStateClass,
     SensorEntity
 )
-import json
 import math
 import logging
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -263,7 +262,8 @@ class AccumulativeEnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator]
 
 class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for total energy usage."""
-    _attr_name = "Session Energy Usage"
+    _attr_name = "Energy"
+    _attr_has_entity_name = True
     _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
     _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 1

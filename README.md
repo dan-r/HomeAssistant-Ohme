@@ -57,8 +57,8 @@ This integration exposes the following entities:
     * Next Charge Slot End - The next time your car will stop charging according to the Ohme-generated charge plan
 * Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
-    * Session Energy Usage (kWh) - Energy used in the current session. *This is supported by the energy dashboard.*
-    * Accumulative Energy Usage (kWh) - Total energy used by the charger (If enabled in options)
+    * Energy Usage (kWh) - Energy used in the current/last session. *This is supported by the energy dashboard.*
+    * Accumulative Energy Usage (kWh) - Deprecated - Total energy used by the charger (If enabled in options)
     * Battery State of Charge (%) - If your car is API connected this is read from the car, if not it is how much charge Ohme thinks it has added
 * Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger

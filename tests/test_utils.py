@@ -57,3 +57,51 @@ async def test_charge_graph_in_slot(hass):
     expected = True
 
     assert expected == result
+
+
+async def test_next_slot_no_live_no_in_progress():
+    """Test that the _next_slot function returns the correct result when live and in_progress are False."""
+    TEST_DATA = [{"t": 10, "y": 0}, {"t": 20, "y": 0},
+            {"t": 30, "y": 10}, {"t": 40, "y": 20},
+            {"t": 50, "y": 20}, {"t": 60, "y": 0}]
+
+    result = utils._next_slot(TEST_DATA, live=False, in_progress=False)
+    expected = [None, None, 4, 0]
+
+    assert expected == result
+
+
+async def test_next_slot_live_no_in_progress():
+    """Test that the _next_slot function returns the correct result when live is True and in_progress is False."""
+    TEST_DATA = [{"t": 10, "y": 0}, {"t": 20, "y": 0},
+            {"t": 30, "y": 10}, {"t": 40, "y": 20},
+            {"t": 50, "y": 20}, {"t": 60, "y": 0}]
+
+    result = utils._next_slot(TEST_DATA, live=True, in_progress=False)
+    expected = [None, 41, 4, 20]
+
+    assert expected == result
+
+
+async def test_next_slot_no_live_in_progress():
+    """Test that the _next_slot function returns the correct result when live is False and in_progress is True."""
+    TEST_DATA = [{"t": 10, "y": 0}, {"t": 20, "y": 0},
+            {"t": 30, "y": 10}, {"t": 40, "y": 20},
+            {"t": 50, "y": 20}, {"t": 60, "y": 0}]
+
+    result = utils._next_slot(TEST_DATA, live=False, in_progress=True)
+    expected = [None, None, 4, 0]
+
+    assert expected == result
+
+
+async def test_next_slot_live_in_progress():
+    """Test that the _next_slot function returns the correct result when live and in_progress are True."""
+    TEST_DATA = [{"t": 10, "y": 0}, {"t": 20, "y": 0},
+            {"t": 30, "y": 10}, {"t": 40, "y": 20},
+            {"t": 50, "y": 20}, {"t": 60, "y": 0}]
+
+    result = utils._next_slot(TEST_DATA, live=True, in_progress=True)
+    expected = [None, 41, 4, 20]
+
+    assert expected == result

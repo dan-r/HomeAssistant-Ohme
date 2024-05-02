@@ -525,10 +525,7 @@ class BatterySOCSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorE
     def _handle_coordinator_update(self) -> None:
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data and self.coordinator.data['car'] and self.coordinator.data['car']['batterySoc']:
-            new_state = self.coordinator.data['car']['batterySoc']['percent'] or self.coordinator.data['batterySoc']['percent']
-
-            # Don't let it go backwards unless to 0
-            self._state = 0 if new_state == 0 else max(new_state, self._state or 0)
+            self._state = self.coordinator.data['car']['batterySoc']['percent'] or self.coordinator.data['batterySoc']['percent']
 
             self._last_updated = utcnow()
             self.async_write_ha_state()

@@ -200,8 +200,10 @@ class OhmeApiClient:
         """Apply rule to ongoing charge/stop max charge."""
         # Check every property. If we've provided it, use that. If not, use the existing.
         if max_price is None:
-            max_price = self._last_rule['settings'][0]['enabled'] if 'settings' in self._last_rule and len(
-                self._last_rule['settings']) > 1 else False
+            if 'settings' in self._last_rule and self._last_rule['settings'] is not None and len(self._last_rule['settings']) > 1:
+                max_price = self._last_rule['settings'][0]['enabled']
+            else:
+                max_price = False
 
         if target_percent is None:
             target_percent = self._last_rule['targetPercent'] if 'targetPercent' in self._last_rule else 80

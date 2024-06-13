@@ -252,7 +252,10 @@ class PriceCapNumber(NumberEntity):
     def _handle_coordinator_update(self) -> None:
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data is not None:
-            self._state = self.coordinator.data["userSettings"]["chargeSettings"][0]["value"]
+            try:
+                self._state = self.coordinator.data["userSettings"]["chargeSettings"][0]["value"]
+            except:
+                self._state = None
         self.async_write_ha_state()
 
     @property

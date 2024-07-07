@@ -12,14 +12,13 @@ def next_slot(data):
     start = None
     end = None
 
-    if slots is not None:
-        # Loop through slots
-        for slot in slots:
-            # Only take the first slot start/end that matches. These are in order.
-            if start is None and slot['start'] > datetime.now().astimezone():
-                start = slot['start']
-            if end is None and slot['end'] > datetime.now().astimezone():
-                end = slot['end']
+    # Loop through slots
+    for slot in slots:
+        # Only take the first slot start/end that matches. These are in order.
+        if start is None and slot['start'] > datetime.now().astimezone():
+            start = slot['start']
+        if end is None and slot['end'] > datetime.now().astimezone():
+            end = slot['end']
     
     return {
         "start": start,
@@ -31,10 +30,14 @@ def slot_list(data):
     """Get list of charge slots."""
     session_slots = data['allSessionSlots']
     if session_slots is None or len(session_slots) == 0:
-        return None
+        return []
     
     slots = []
-    wh_tally = data['batterySocBefore']['wh'] # Get the wh value we start from
+    wh_tally = 0
+    
+    if 'batterySocBefore' in data and data['batterySocBefore'] is not None:
+        wh_tally = data['batterySocBefore']['wh'] # Get the wh value we start from
+
     for slot in session_slots:
         slots.append(
             {
@@ -55,12 +58,11 @@ def in_slot(data):
     """Are we currently in a charge slot?"""
     slots = slot_list(data)
 
-    if slots is not None:
-        # Loop through slots
-        for slot in slots:
-            # If we are in one
-            if slot['start'] < datetime.now().astimezone() and slot['end'] > datetime.now().astimezone():
-                return True
+    # Loop through slots
+    for slot in slots:
+        # If we are in one
+        if slot['start'] < datetime.now().astimezone() and slot['end'] > datetime.now().astimezone():
+            return True
     
     return False
 

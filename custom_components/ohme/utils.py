@@ -41,8 +41,8 @@ def slot_list(data):
     for slot in session_slots:
         slots.append(
             {
-                "start": datetime.utcfromtimestamp(slot['startTimeMs'] / 1000).replace(tzinfo=pytz.utc).astimezone(),
-                "end": datetime.utcfromtimestamp(slot['endTimeMs'] / 1000).replace(tzinfo=pytz.utc).astimezone(),
+                "start": datetime.utcfromtimestamp(slot['startTimeMs'] / 1000).replace(tzinfo=pytz.utc, microsecond=0).astimezone(),
+                "end": datetime.utcfromtimestamp(slot['endTimeMs'] / 1000).replace(tzinfo=pytz.utc, microsecond=0).astimezone(),
                 "charge_in_kwh": -((slot['estimatedSoc']['wh'] - wh_tally) / 1000), # Work out how much we add in just this slot
                 "source": "smart-charge",
                 "location": None

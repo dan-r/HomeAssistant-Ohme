@@ -137,7 +137,7 @@ class ChargingBinarySensor(
             return power > 0
         
         # See if we are in a charge slot now and if we were for the last reading
-        in_charge_slot = in_slot(self.coordinator.data['allSessionSlots'])
+        in_charge_slot = in_slot(self.coordinator.data)
         lr_in_charge_slot = self._last_reading_in_slot
         # Store this for next time
         self._last_reading_in_slot = in_charge_slot
@@ -312,7 +312,7 @@ class CurrentSlotBinarySensor(
         elif self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = False
         else:
-            self._state = in_slot(self.coordinator.data['allSessionSlots'])
+            self._state = in_slot(self.coordinator.data)
 
         self._last_updated = utcnow()
 

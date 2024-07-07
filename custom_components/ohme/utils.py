@@ -29,20 +29,24 @@ def next_slot(data):
 
 def slot_list(data):
     """Get list of charge slots."""
-    if data is None or len(data) == 0:
+    session_slots = data['allSessionSlots']
+    if session_slots is None or len(session_slots) == 0:
         return None
     
     slots = []
-    for slot in data:
+    wh_tally = data['batterySocBefore']['wh'] # Get the wh value we start from
+    for slot in session_slots:
         slots.append(
             {
                 "start": datetime.utcfromtimestamp(slot['startTimeMs'] / 1000).replace(tzinfo=pytz.utc).astimezone(),
                 "end": datetime.utcfromtimestamp(slot['endTimeMs'] / 1000).replace(tzinfo=pytz.utc).astimezone(),
-                "charge_in_kwh": -(slot['estimatedSoc']['wh'] / 1000),
+                "charge_in_kwh": -((slot['estimatedSoc']['wh'] - wh_tally) / 1000), # Work out how much we add in just this slot
                 "source": "smart-charge",
                 "location": None
             }
         )
+        
+        wh_tally = slot['estimatedSoc']['wh']
 
     return slots
 

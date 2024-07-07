@@ -360,7 +360,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = next_slot(self.coordinator.data['allSessionSlots'])['start']
+            self._state = next_slot(self.coordinator.data)['start']
 
         self._last_updated = utcnow()
 
@@ -411,7 +411,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = next_slot(self.coordinator.data['allSessionSlots'])['end']
+            self._state = next_slot(self.coordinator.data)['end']
 
         self._last_updated = utcnow()
 
@@ -462,7 +462,7 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED" or self.coordinator.data["mode"] == "FINISHED_CHARGE":
             self._state = None
         else:
-            slots = slot_list(self.coordinator.data['allSessionSlots'])
+            slots = slot_list(self.coordinator.data)
             
             # Store slots for external use
             self._hass.data[DOMAIN][DATA_SLOTS] = slots

@@ -15,7 +15,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
-from .utils import charge_graph_next_slot, charge_graph_slot_list, get_option
+from .utils import next_slot, get_option, slot_list
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -360,8 +360,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = charge_graph_next_slot(
-                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])['start']
+            self._state = next_slot(self.coordinator.data['allSessionSlots'])['start']
 
         self._last_updated = utcnow()
 
@@ -412,8 +411,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = charge_graph_next_slot(
-                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])['end']
+            self._state = next_slot(self.coordinator.data['allSessionSlots'])['end']
 
         self._last_updated = utcnow()
 
@@ -463,10 +461,8 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         """Get a list of charge slots."""
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED" or self.coordinator.data["mode"] == "FINISHED_CHARGE":
             self._state = None
-            self._hass.data[DOMAIN][DATA_SLOTS] = []
         else:
-            slots = charge_graph_slot_list(
-                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+            slots = slot_list(self.coordinator.data['allSessionSlots'])
             
             # Store slots for external use
             self._hass.data[DOMAIN][DATA_SLOTS] = slots

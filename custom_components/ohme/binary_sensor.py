@@ -11,7 +11,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED, DATA_CLIENT
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
-from .utils import charge_graph_in_slot
+from .utils import in_slot
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -137,8 +137,7 @@ class ChargingBinarySensor(
             return power > 0
         
         # See if we are in a charge slot now and if we were for the last reading
-        in_charge_slot = charge_graph_in_slot(
-            self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+        in_charge_slot = in_slot(self.coordinator.data['allSessionSlots'])
         lr_in_charge_slot = self._last_reading_in_slot
         # Store this for next time
         self._last_reading_in_slot = in_charge_slot
@@ -313,8 +312,7 @@ class CurrentSlotBinarySensor(
         elif self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = False
         else:
-            self._state = charge_graph_in_slot(
-                self.coordinator.data['startTime'], self.coordinator.data['chargeGraph']['points'])
+            self._state = in_slot(self.coordinator.data['allSessionSlots'])
 
         self._last_updated = utcnow()
 

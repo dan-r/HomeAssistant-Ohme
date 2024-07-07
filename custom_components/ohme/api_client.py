@@ -191,9 +191,9 @@ class OhmeApiClient:
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/approve?approve=true")
         return bool(result)
 
-    async def async_max_charge(self):
+    async def async_max_charge(self, state=True):
         """Enable max charge"""
-        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=true")
+        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=" + str(state).lower())
         return bool(result)
 
     async def async_apply_session_rule(self, max_price=None, target_time=None, target_percent=None, pre_condition=None, pre_condition_length=None):

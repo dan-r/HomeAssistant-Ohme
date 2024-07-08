@@ -35,7 +35,7 @@ def slot_list(data):
     slots = []
     wh_tally = 0
     
-    if 'batterySocBefore' in data and data['batterySocBefore'] is not None:
+    if 'batterySocBefore' in data and data['batterySocBefore'] is not None and data['batterySocBefore']['wh'] is not None:
         wh_tally = data['batterySocBefore']['wh'] # Get the wh value we start from
 
     for slot in session_slots:

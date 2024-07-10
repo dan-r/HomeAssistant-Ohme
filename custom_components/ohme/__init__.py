@@ -84,11 +84,8 @@ async def async_setup_entry(hass, entry):
 
     hass.data[DOMAIN][DATA_COORDINATORS] = coordinators
 
-    # Create tasks for each entity type
-    for entity_type in ENTITY_TYPES:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, entity_type)
-        )
+    # Setup entities
+    await hass.config_entries.async_forward_entry_setups(entry, ENTITY_TYPES)
 
     entry.async_on_unload(entry.add_update_listener(async_update_listener))
 

@@ -152,7 +152,7 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
 
     async def async_turn_on(self):
         """Turn on the switch."""
-        await self._client.async_max_charge()
+        await self._client.async_max_charge(True)
 
         # Not very graceful but wait here to avoid the mode coming back as 'CALCULATING'
         # It would be nice to simply ignore this state in future and try again after x seconds.
@@ -162,7 +162,7 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
     async def async_turn_off(self):
         """Stop max charging.
            We are not changing anything, just applying the last rule. No need to supply anything."""
-        await self._client.async_apply_session_rule()
+        await self._client.async_max_charge(False)
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

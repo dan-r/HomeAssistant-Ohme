@@ -1,4 +1,5 @@
 from time import time
+from functools import reduce
 from datetime import datetime, timedelta
 from .const import DOMAIN, DATA_OPTIONS
 import pytz
@@ -52,6 +53,27 @@ def slot_list(data):
         wh_tally = slot['estimatedSoc']['wh']
 
     return slots
+
+
+def slot_list_str(slots):
+        # Convert list to tuples of times
+        t_slots = []
+        for slot in slots:
+            t_slots.append((slot['start'].strftime('%H:%M'), slot['end'].strftime('%H:%M')))
+
+        # Collapse slots so consecutive slots become one
+        state = []
+        for i in range(len(t_slots)):
+            if not state or state[-1][1] != t_slots[i][0]:
+                state.append(t_slots[i])
+            else:
+                state[-1] = (state[-1][0], t_slots[i][1])
+        
+        # Convert list of tuples to string
+        state = reduce(lambda acc, slot: acc + f"{slot[0]}-{slot[1]}, ", state, "")[:-2]
+
+        # Make sure we return None/Unknown if the list is empty
+        return None if state == "" else state
 
 
 def in_slot(data):

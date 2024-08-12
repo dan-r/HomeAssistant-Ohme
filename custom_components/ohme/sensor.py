@@ -1,6 +1,5 @@
 """Platform for sensor integration."""
 from __future__ import annotations
-from functools import reduce
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
@@ -15,7 +14,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
-from .utils import next_slot, get_option, slot_list
+from .utils import next_slot, get_option, slot_list, slot_list_str
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -468,10 +467,7 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
             self._hass.data[DOMAIN][DATA_SLOTS] = slots
 
             # Convert list to text
-            self._state = reduce(lambda acc, slot: acc + f"{slot['start'].strftime('%H:%M')}-{slot['end'].strftime('%H:%M')}, ", slots, "")[:-2]
-
-            # Make sure we return None/Unknown if the list is empty
-            self._state = None if self._state == "" else self._state
+            self._state = slot_list_str(slots)
             
         self._last_updated = utcnow()
         self.async_write_ha_state()

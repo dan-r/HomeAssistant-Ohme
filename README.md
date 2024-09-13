@@ -14,7 +14,7 @@ This integration has been tested with the following hardware:
 * Ohme ePod [v2.12]
 
 ## External Software
-The 'Charge Slot Active' binary sensor mimics the `planned_dispatches` and `completed_dispatches` attributes from the [Octopus Energy](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy) integration, so should support external software which reads this such as [predbat](https://github.com/springfall2008/batpred).
+The 'Charge Slot Active' binary sensor mimics the `planned_dispatches` and `completed_dispatches` attributes from the [Octopus Energy](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy) integration, so should support external software which reads this such as [predbat](https://springfall2008.github.io/batpred/devices/#ohme).
 
 
 ## Installation

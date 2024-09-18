@@ -7,20 +7,28 @@ import pytz
 # _LOGGER = logging.getLogger(__name__)
 
 
-def next_slot(data):
+def next_slot(hass, data):
     """Get the next charge slot start/end times."""
     slots = slot_list(data)
+    collapse_slots = not get_option(hass, "never_collapse_slots", False)
+
     start = None
     end = None
 
     # Loop through slots
     for slot in slots:
-        # Only take the first slot start/end that matches. These are in order.
-        if start is None and slot['start'] > datetime.now().astimezone():
-            start = slot['start']
-        if end is None and slot['end'] > datetime.now().astimezone():
-            end = slot['end']
-    
+        # Only process slots that are in the future
+        if slot['start'] > datetime.now().astimezone():
+            if start is None:
+                start = slot['start']
+                end = slot['end']
+            elif collapse_slots and slot['start'] == end:
+                # Extend the current slot if it's adjacent
+                end = slot['end']
+            else:
+                # If not collapsing or no longer adjacent, stop
+                break
+
     return {
         "start": start,
         "end": end
@@ -55,20 +63,26 @@ def slot_list(data):
     return slots
 
 
-def slot_list_str(slots):
+def slot_list_str(hass, slots):
+        """Convert slot list to string."""
+
         # Convert list to tuples of times
         t_slots = []
         for slot in slots:
             t_slots.append((slot['start'].strftime('%H:%M'), slot['end'].strftime('%H:%M')))
 
-        # Collapse slots so consecutive slots become one
         state = []
-        for i in range(len(t_slots)):
-            if not state or state[-1][1] != t_slots[i][0]:
-                state.append(t_slots[i])
-            else:
-                state[-1] = (state[-1][0], t_slots[i][1])
-        
+
+        if not get_option(hass, "never_collapse_slots", False):
+            # Collapse slots so consecutive slots become one
+            for i in range(len(t_slots)):
+                if not state or state[-1][1] != t_slots[i][0]:
+                    state.append(t_slots[i])
+                else:
+                    state[-1] = (state[-1][0], t_slots[i][1])
+        else:
+            state = t_slots
+            
         # Convert list of tuples to string
         state = reduce(lambda acc, slot: acc + f"{slot[0]}-{slot[1]}, ", state, "")[:-2]
 

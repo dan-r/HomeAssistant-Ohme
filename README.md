@@ -81,6 +81,7 @@ This integration exposes the following entities:
 ## Options
 Some options can be set from the 'Configure' menu in Home Assistant:
 * Never update an ongoing session - Override the default behaviour of the target time, percentage and preconditioning inputs and only ever update the schedule, not the current session. This was added as changing the current session can cause issues for customers on Intelligent Octopus Go.
+* Don't collapse charge slots - By default, adjacent slots are merged into one. This option shows every slot, as shown in the Ohme app.
 * Enable accumulative energy usage sensor - Enable the sensor showing an all-time incrementing energy usage counter. This causes issues with some accounts. 
 
 

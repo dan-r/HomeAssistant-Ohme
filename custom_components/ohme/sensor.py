@@ -331,6 +331,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         self._attributes = {}
         self._last_updated = None
         self._client = client
+        self._hass = hass
 
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_next_slot", hass=hass)
@@ -359,7 +360,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = next_slot(self.coordinator.data)['start']
+            self._state = next_slot(self._hass, self.coordinator.data)['start']
 
         self._last_updated = utcnow()
 
@@ -382,6 +383,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         self._attributes = {}
         self._last_updated = None
         self._client = client
+        self._hass = hass
 
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_next_slot_end", hass=hass)
@@ -410,7 +412,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = next_slot(self.coordinator.data)['end']
+            self._state = next_slot(self._hass, self.coordinator.data)['end']
 
         self._last_updated = utcnow()
 
@@ -467,7 +469,7 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
             self._hass.data[DOMAIN][DATA_SLOTS] = slots
 
             # Convert list to text
-            self._state = slot_list_str(slots)
+            self._state = slot_list_str(self._hass, slots)
             
         self._last_updated = utcnow()
         self.async_write_ha_state()

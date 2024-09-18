@@ -23,11 +23,13 @@
           "email": "Email address",
           "password": "Password",
           "never_session_specific": "Never update an ongoing session",
+          "never_collapse_slots": "Don't collapse charge slots",
           "enable_accumulative_energy": "Enable accumulative energy sensor"
         },
         "data_description": {
           "password": "If you are not changing your credentials, leave the password field empty.",
-          "never_session_specific": "When adjusting charge percentage, charge target or preconditioning settings, the schedule will always be updated even if a charge session is in progress."
+          "never_session_specific": "When adjusting charge percentage, charge target or preconditioning settings, the schedule will always be updated even if a charge session is in progress.",
+          "never_collapse_slots": "By default, adjacent slots are merged into one. This option shows every slot, as shown in the Ohme app."
         }
       }
     },

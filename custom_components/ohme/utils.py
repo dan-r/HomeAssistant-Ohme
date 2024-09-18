@@ -1,4 +1,3 @@
-from time import time
 from functools import reduce
 from datetime import datetime, timedelta
 from .const import DOMAIN, DATA_OPTIONS
@@ -17,17 +16,16 @@ def next_slot(hass, data):
 
     # Loop through slots
     for slot in slots:
-        # Only process slots that are in the future
-        if slot['start'] > datetime.now().astimezone():
-            if start is None:
-                start = slot['start']
-                end = slot['end']
-            elif collapse_slots and slot['start'] == end:
-                # Extend the current slot if it's adjacent
-                end = slot['end']
-            else:
-                # If not collapsing or no longer adjacent, stop
-                break
+        # Only take the first slot start/end that matches. These are in order.
+        if start is None and slot['start'] > datetime.now().astimezone():
+            start = slot['start']
+            end = slot['end']
+        elif end is None and slot['end'] > datetime.now().astimezone():
+            end = slot['end']
+        elif collapse_slots and slot['start'] == end:
+            end = slot['end']
+        elif start is not None and end is not None:
+            break
 
     return {
         "start": start,

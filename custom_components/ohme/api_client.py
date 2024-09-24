@@ -212,8 +212,7 @@ class OhmeApiClient:
             pre_condition = self._last_rule['preconditioningEnabled'] if 'preconditioningEnabled' in self._last_rule else False
 
         if pre_condition_length is None:
-            pre_condition_length = self._last_rule[
-                'preconditionLengthMins'] if 'preconditionLengthMins' in self._last_rule else 30
+            pre_condition_length = self._last_rule['preconditionLengthMins'] if ('preconditionLengthMins' in self._last_rule and self._last_rule['preconditionLengthMins'] is not None) else 30
 
         if target_time is None:
             # Default to 9am

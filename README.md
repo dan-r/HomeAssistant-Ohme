@@ -66,12 +66,12 @@ This integration exposes the following entities:
 * Switches (Charge state) - **These are only functional when a car is connected**
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge
-    * Enable Price Cap - Whether price cap is applied
+    * Enable Price Cap - Whether price cap is applied. _Due to changes by Ohme, this will not show for Intelligent Octopus users._
 * Inputs - **If in a charge session, these change the active charge. If disconnected, they change your first schedule.**
     * Number
         * Target Percentage - Change the target battery percentage
         * Preconditioning - Change pre-conditioning time. 0 is off
-        * Price Cap - Maximum charge price
+        * Price Cap - Maximum charge price. _Due to changes by Ohme, this will not show for Intelligent Octopus users._
     * Time
         * Target Time - Change the target time
 * Buttons

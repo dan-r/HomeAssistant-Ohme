@@ -22,8 +22,12 @@ async def async_setup_entry(
     numbers = [TargetPercentNumber(
         coordinators[COORDINATOR_CHARGESESSIONS], coordinators[COORDINATOR_SCHEDULES], hass, client),
         PreconditioningNumber(
-        coordinators[COORDINATOR_CHARGESESSIONS], coordinators[COORDINATOR_SCHEDULES], hass, client),
-        PriceCapNumber(coordinators[COORDINATOR_ACCOUNTINFO], hass, client)]
+        coordinators[COORDINATOR_CHARGESESSIONS], coordinators[COORDINATOR_SCHEDULES], hass, client)]
+
+    if client.cap_available():
+        numbers.append(
+            PriceCapNumber(coordinators[COORDINATOR_ACCOUNTINFO], hass, client)
+        )
 
     async_add_entities(numbers, update_before_add=True)
 
@@ -234,15 +238,16 @@ class PriceCapNumber(NumberEntity):
     def native_unit_of_measurement(self):
         if self.coordinator.data is None:
             return None
-        
+
         penny_unit = {
             "GBP": "p",
             "EUR": "c"
         }
-        currency = self.coordinator.data["userSettings"].get("currencyCode", "XXX")
+        currency = self.coordinator.data["userSettings"].get(
+            "currencyCode", "XXX")
 
         return penny_unit.get(currency, f"{currency}/100")
-    
+
     @property
     def icon(self):
         """Icon of the sensor."""

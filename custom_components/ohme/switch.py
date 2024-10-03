@@ -31,7 +31,12 @@ async def async_setup_entry(
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),
                 OhmeMaxChargeSwitch(coordinator, hass, client),
-                OhmePriceCapSwitch(accountinfo_coordinator, hass, client)]
+                ]
+
+    if client.cap_available():
+        switches.append(
+            OhmePriceCapSwitch(accountinfo_coordinator, hass, client)
+        )
 
     if client.is_capable("buttonsLockable"):
         switches.append(
@@ -256,7 +261,8 @@ class OhmePriceCapSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEn
         if self.coordinator.data is None:
             self._attr_is_on = None
         else:
-            self._attr_is_on = bool(self.coordinator.data["userSettings"]["chargeSettings"][0]["enabled"])
+            self._attr_is_on = bool(
+                self.coordinator.data["userSettings"]["chargeSettings"][0]["enabled"])
 
         self._last_updated = utcnow()
 

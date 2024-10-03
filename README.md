@@ -21,9 +21,8 @@ The 'Charge Slot Active' binary sensor mimics the `planned_dispatches` and `comp
 
 ### HACS
 This is the recommended installation method.
-1. Add this repository to HACS as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories)
-2. Search for and install the Ohme addon from HACS
-3. Restart Home Assistant
+1. Search for and install the Ohme addon from HACS
+2. Restart Home Assistant
 
 ### Manual
 1. Download the [latest release](https://github.com/dan-r/HomeAssistant-Ohme/releases)

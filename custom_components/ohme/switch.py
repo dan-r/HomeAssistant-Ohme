@@ -30,14 +30,18 @@ async def async_setup_entry(
     client = hass.data[DOMAIN][DATA_CLIENT]
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),
-                OhmeMaxChargeSwitch(coordinator, hass, client),
+                OhmeMaxChargeSwitch(coordinator, hass, client)
                 ]
 
     if client.cap_available():
         switches.append(
             OhmePriceCapSwitch(accountinfo_coordinator, hass, client)
         )
-
+    
+    if client.solar_capable():
+        switches.append(
+            OhmeSolarBoostSwitch(accountinfo_coordinator, hass, client)
+        )
     if client.is_capable("buttonsLockable"):
         switches.append(
             OhmeConfigurationSwitch(
@@ -226,6 +230,62 @@ class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Swi
     async def async_turn_off(self):
         """Turn off the switch."""
         await self._client.async_set_configuration_value({self._config_key: False})
+
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
+
+
+class OhmeSolarBoostSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
+    """Switch for changing configuration options."""
+
+    def __init__(self, coordinator, hass: HomeAssistant, client):
+        super().__init__(coordinator=coordinator)
+
+        self._client = client
+
+        self._state = False
+        self._last_updated = None
+        self._attributes = {}
+
+        self._attr_name = "Solar Boost"
+        self.entity_id = generate_entity_id(
+            "switch.{}", "ohme_solar_boost", hass=hass)
+
+        self._attr_device_info = client.get_device_info()
+
+    @property
+    def unique_id(self):
+        """The unique ID of the switch."""
+        return self._client.get_unique_id("solarMode")
+
+    @property
+    def icon(self):
+        """Icon of the switch."""
+        return "mdi:solar-power"
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Determine configuration value."""
+        if self.coordinator.data is None:
+            self._attr_is_on = None
+        else:
+            settings = self.coordinator.data["chargeDevices"][0]["optionalSettings"]
+            self._attr_is_on = bool(settings["solarMode"] == "ZERO_EXPORT")
+
+        self._last_updated = utcnow()
+
+        self.async_write_ha_state()
+
+    async def async_turn_on(self):
+        """Turn on the switch."""
+        await self._client.async_set_configuration_value({"solarMode": "ZERO_EXPORT"})
+
+        await asyncio.sleep(1)
+        await self.coordinator.async_refresh()
+
+    async def async_turn_off(self):
+        """Turn off the switch."""
+        await self._client.async_set_configuration_value({"solarMode": "IGNORE"})
 
         await asyncio.sleep(1)
         await self.coordinator.async_refresh()

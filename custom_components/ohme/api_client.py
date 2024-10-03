@@ -29,6 +29,7 @@ class OhmeApiClient:
         self._ct_connected = False
         self._provision_date = None
         self._disable_cap = False
+        self._solar_capable = False
 
         # Authentication
         self._token_birth = 0
@@ -168,6 +169,9 @@ class OhmeApiClient:
     def is_capable(self, capability):
         """Return whether or not this model has a given capability."""
         return bool(self._capabilities[capability])
+
+    def solar_capable(self):
+        return self._solar_capable
 
     def cap_available(self):
         return not self._disable_cap
@@ -322,10 +326,12 @@ class OhmeApiClient:
         self._device_info = info
         self._provision_date = device['provisioningTs']
 
-        self._disable_cap = False
-
         if resp['tariff'] is not None and resp['tariff']['dsrTariff']:
             self._disable_cap = True
+
+        solar_modes = device['modelCapabilities']['solarModes']
+        if isinstance(solar_modes, list) and len(solar_modes) == 1:
+            self._solar_capable = True
 
         return True
 

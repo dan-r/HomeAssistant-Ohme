@@ -63,6 +63,7 @@ This integration exposes the following entities:
     * Lock Buttons - Locks buttons on charger
     * Require Approval - Require approval to start a charge
     * Sleep When Inactive - Charger screen & lights will automatically turn off
+    * Solar Boost
 * Switches (Charge state) - **These are only functional when a car is connected**
     * Max Charge - Forces the connected car to charge regardless of set schedule
     * Pause Charge - Pauses an ongoing charge

@@ -28,6 +28,8 @@ class OhmeApiClient:
         self._capabilities = {}
         self._ct_connected = False
         self._provision_date = None
+        self._disable_cap = False
+        self._solar_capable = False
 
         # Authentication
         self._token_birth = 0
@@ -168,6 +170,12 @@ class OhmeApiClient:
         """Return whether or not this model has a given capability."""
         return bool(self._capabilities[capability])
 
+    def solar_capable(self):
+        return self._solar_capable
+
+    def cap_available(self):
+        return not self._disable_cap
+
     def get_device_info(self):
         return self._device_info
 
@@ -212,8 +220,8 @@ class OhmeApiClient:
             pre_condition = self._last_rule['preconditioningEnabled'] if 'preconditioningEnabled' in self._last_rule else False
 
         if pre_condition_length is None:
-            pre_condition_length = self._last_rule[
-                'preconditionLengthMins'] if 'preconditionLengthMins' in self._last_rule else 30
+            pre_condition_length = self._last_rule['preconditionLengthMins'] if (
+                'preconditionLengthMins' in self._last_rule and self._last_rule['preconditionLengthMins'] is not None) else 30
 
         if target_time is None:
             # Default to 9am
@@ -230,7 +238,7 @@ class OhmeApiClient:
 
         result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
         return bool(result)
-    
+
     async def async_change_price_cap(self, enabled=None, cap=None):
         """Change price cap settings."""
         settings = await self._get_request("/v1/users/me/settings")
@@ -261,7 +269,8 @@ class OhmeApiClient:
         if target_percent is not None:
             rule['targetPercent'] = target_percent
         if target_time is not None:
-            rule['targetTime'] = (target_time[0] * 3600) + (target_time[1] * 60)
+            rule['targetTime'] = (target_time[0] * 3600) + \
+                (target_time[1] * 60)
 
         # Update pre-conditioning if provided
         if pre_condition is not None:
@@ -316,6 +325,13 @@ class OhmeApiClient:
         self._serial = device['id']
         self._device_info = info
         self._provision_date = device['provisioningTs']
+
+        if resp['tariff'] is not None and resp['tariff']['dsrTariff']:
+            self._disable_cap = True
+
+        solar_modes = device['modelCapabilities']['solarModes']
+        if isinstance(solar_modes, list) and len(solar_modes) == 1:
+            self._solar_capable = True
 
         return True
 

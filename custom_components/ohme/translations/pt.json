@@ -1,0 +1,42 @@
+{
+  "title": "Ohme",
+  "config": {
+    "step": {
+      "user": {
+        "description": "Configure a sua conta Ohme.",
+        "data": {
+          "email": "Endereço de Email",
+          "password": "Palavra-passe"
+        }
+      }
+    },
+    "error": {
+      "auth_error": "Credenciais inválidas fornecidas. Por favor, certifique-se de que está a utilizar uma conta Ohme e não uma conta social (ex. Google)."
+    },
+    "abort": {}
+  },
+  "options": {
+    "step": {
+      "init": {
+        "description": "Atualize as suas informações da conta Ohme.",
+        "data": {
+          "email": "Endereço de Email",
+          "password": "Palavra-passe",
+          "never_session_specific": "Nunca atualizar uma sessão em curso",
+          "never_collapse_slots": "Não agrupar intervalos de carregamento",
+          "enable_accumulative_energy": "Ativar sensor de energia acumulada"
+        },
+        "data_description": {
+          "password": "Se não estiver a alterar as suas credenciais, deixe o campo da palavra-passe vazio.",
+          "never_session_specific": "Ao ajustar a percentagem de carga, o objetivo de carregamento ou as definições de pré-condicionamento, o agendamento será sempre atualizado, mesmo que uma sessão de carregamento esteja em curso.",
+          "never_collapse_slots": "Por padrão, intervalos adjacentes são fundidos num só. Esta opção mostra todos os intervalos, tal como na aplicação Ohme."
+        }
+      }
+    },
+    "error": {
+      "auth_error": "Credenciais inválidas fornecidas. Por favor, certifique-se de que está a utilizar uma conta Ohme e não uma conta social (ex. Google)."
+    },
+    "abort": {}
+  },
+  "issues": {}
+}

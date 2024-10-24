@@ -291,12 +291,15 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         # Ensure we have data, then ensure value is going up and above 0
         if self.coordinator.data and self.coordinator.data['batterySoc']:
             new_state = self.coordinator.data['batterySoc']['wh']
+            _LOGGER.debug("EnergyUsageSensor: Raw Wh reading %s", new_state)
 
             # Let the state reset to 0, but not drop otherwise
             if not new_state or new_state <= 0:
+                _LOGGER.debug("EnergyUsageSensor: Resetting Wh reading to 0")
                 self._state = 0
             else:
                 self._state = max(0, self._state or 0, new_state)
+                _LOGGER.debug("EnergyUsageSensor: New state is %s", self._state)
 
             self.async_write_ha_state()
 

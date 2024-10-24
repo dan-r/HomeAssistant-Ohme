@@ -1,6 +1,6 @@
 import voluptuous as vol
 from homeassistant.config_entries import (ConfigFlow, OptionsFlow)
-from .const import DOMAIN, CONFIG_VERSION
+from .const import DOMAIN, CONFIG_VERSION, DEFAULT_INTERVAL_CHARGESESSIONS, DEFAULT_INTERVAL_ACCOUNTINFO, DEFAULT_INTERVAL_ADVANCED, DEFAULT_INTERVAL_SCHEDULES
 from .api_client import OhmeApiClient
 
 
@@ -89,6 +89,18 @@ class OhmeOptionsFlow(OptionsFlow):
                         ) : bool,
                         vol.Required(
                             "never_collapse_slots", default=self._config_entry.options.get("never_collapse_slots", False)
-                        ) : bool
+                        ) : bool,
+                        vol.Required(
+                            "interval_chargesessions", default=self._config_entry.options.get("interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS)
+                        ) : vol.All(vol.Coerce(float), vol.Clamp(min=DEFAULT_INTERVAL_CHARGESESSIONS)),
+                        vol.Required(
+                            "interval_accountinfo", default=self._config_entry.options.get("interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO)
+                        ) : vol.All(vol.Coerce(float), vol.Clamp(min=DEFAULT_INTERVAL_ACCOUNTINFO)),
+                        vol.Required(
+                            "interval_advanced", default=self._config_entry.options.get("interval_advanced", DEFAULT_INTERVAL_ADVANCED)
+                        ) : vol.All(vol.Coerce(float), vol.Clamp(min=DEFAULT_INTERVAL_ADVANCED)),
+                        vol.Required(
+                            "interval_schedules", default=self._config_entry.options.get("interval_schedules", DEFAULT_INTERVAL_SCHEDULES)
+                        ) : vol.All(vol.Coerce(float), vol.Clamp(min=DEFAULT_INTERVAL_SCHEDULES))
                     }), errors=errors
         )

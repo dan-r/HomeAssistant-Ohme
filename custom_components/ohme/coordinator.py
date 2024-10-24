@@ -6,7 +6,8 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed
 )
 
-from .const import DOMAIN, DATA_CLIENT
+from .const import DOMAIN, DATA_CLIENT, DEFAULT_INTERVAL_CHARGESESSIONS, DEFAULT_INTERVAL_ACCOUNTINFO, DEFAULT_INTERVAL_ADVANCED, DEFAULT_INTERVAL_SCHEDULES
+from .utils import get_option
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +21,9 @@ class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Charge Sessions",
-            update_interval=timedelta(seconds=30),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -42,7 +45,9 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Account Info",
-            update_interval=timedelta(minutes=1),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -64,7 +69,9 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Advanced Settings",
-            update_interval=timedelta(minutes=1),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_advanced", DEFAULT_INTERVAL_ADVANCED)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -86,7 +93,9 @@ class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Charge Schedules",
-            update_interval=timedelta(minutes=10),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_schedules", DEFAULT_INTERVAL_SCHEDULES)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -97,4 +106,3 @@ class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
 
         except BaseException:
             raise UpdateFailed("Error communicating with API")
-

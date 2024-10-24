@@ -89,9 +89,6 @@ class OhmeOptionsFlow(OptionsFlow):
                         ) : bool,
                         vol.Required(
                             "never_collapse_slots", default=self._config_entry.options.get("never_collapse_slots", False)
-                        ) : bool,
-                        vol.Required(
-                            "enable_accumulative_energy", default=self._config_entry.options.get("enable_accumulative_energy", False)
                         ) : bool
                     }), errors=errors
         )

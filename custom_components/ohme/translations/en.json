@@ -23,8 +23,7 @@
           "email": "Email address",
           "password": "Password",
           "never_session_specific": "Never update an ongoing session",
-          "never_collapse_slots": "Don't collapse charge slots",
-          "enable_accumulative_energy": "Enable accumulative energy sensor"
+          "never_collapse_slots": "Don't collapse charge slots"
         },
         "data_description": {
           "password": "If you are not changing your credentials, leave the password field empty.",

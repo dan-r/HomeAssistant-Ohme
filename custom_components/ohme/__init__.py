@@ -3,7 +3,7 @@ from homeassistant import core
 from .const import *
 from .utils import get_option
 from .api_client import OhmeApiClient
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAccountInfoCoordinator, OhmeAdvancedSettingsCoordinator, OhmeChargeSchedulesCoordinator
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator, OhmeAdvancedSettingsCoordinator, OhmeChargeSchedulesCoordinator
 from homeassistant.exceptions import ConfigEntryNotReady
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,35 +40,16 @@ async def async_setup_entry(hass, entry):
     coordinators = [
         OhmeChargeSessionsCoordinator(hass=hass),   # COORDINATOR_CHARGESESSIONS
         OhmeAccountInfoCoordinator(hass=hass),      # COORDINATOR_ACCOUNTINFO
-        OhmeStatisticsCoordinator(hass=hass),       # COORDINATOR_STATISTICS
         OhmeAdvancedSettingsCoordinator(hass=hass), # COORDINATOR_ADVANCED
         OhmeChargeSchedulesCoordinator(hass=hass)   # COORDINATOR_SCHEDULES
     ]
 
     # We can function without these so setup can continue
     coordinators_optional = [
-        OhmeStatisticsCoordinator,
         OhmeAdvancedSettingsCoordinator
     ]
 
-    coordinators_skipped = []
-
-    # Skip statistics coordinator if we don't need it
-    if not get_option(hass, "enable_accumulative_energy"):
-        coordinators_skipped.append(OhmeStatisticsCoordinator)
-
     for coordinator in coordinators:
-        # If we should skip this coordinator
-        skip = False
-        for skipped in coordinators_skipped:
-            if isinstance(coordinator, skipped):
-                skip = True
-                break
-        
-        if skip:
-            _LOGGER.debug(f"Skipping initial load of {coordinator.__class__.__name__}")
-            continue
-
         # Catch failures if this is an 'optional' coordinator
         try:
             await coordinator.async_config_entry_first_refresh()

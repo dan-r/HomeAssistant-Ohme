@@ -238,10 +238,36 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        charge_graph = -1
+        battery_soc = -1
+        car_battery_soc = -1
+        car_vehicle_status = -1
+
+        try:
+            charge_graph = self.coordinator.data['chargeGraph']['now']['y']
+        except:
+            pass
+
+        try:
+            battery_soc = self.coordinator.data['batterySoc']['wh']
+        except:
+            pass
+
+        try:
+            car_battery_soc = self.coordinator.data['car']['batterySoc']['wh']
+        except:
+            pass
+
+        try:
+            car_vehicle_status = self.coordinator.data['car']['vehicleStatus']['soc']['wh']
+        except:
+            pass
+
+        _LOGGER.debug("EnergyUsageSensor: CG: %s, BS: %s, CB: %s, CV: %s", charge_graph, battery_soc, car_battery_soc, car_vehicle_status)
+
         # Ensure we have data, then ensure value is going up and above 0
         if self.coordinator.data and self.coordinator.data['batterySoc']:
             new_state = self.coordinator.data['batterySoc']['wh']
-            _LOGGER.debug("EnergyUsageSensor: Raw Wh reading %s", new_state)
 
             # Let the state reset to 0, but not drop otherwise
             if not new_state or new_state <= 0:

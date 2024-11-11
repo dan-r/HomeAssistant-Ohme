@@ -238,43 +238,26 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        charge_graph = -1
-        battery_soc = -1
-        car_battery_soc = -1
-        car_vehicle_status = -1
-
-        try:
-            charge_graph = self.coordinator.data['chargeGraph']['now']['y']
-        except:
-            pass
-
-        try:
-            battery_soc = self.coordinator.data['batterySoc']['wh']
-        except:
-            pass
-
-        try:
-            car_battery_soc = self.coordinator.data['car']['batterySoc']['wh']
-        except:
-            pass
-
-        try:
-            car_vehicle_status = self.coordinator.data['car']['vehicleStatus']['soc']['wh']
-        except:
-            pass
-
-        _LOGGER.debug("EnergyUsageSensor: CG: %s, BS: %s, CB: %s, CV: %s", charge_graph, battery_soc, car_battery_soc, car_vehicle_status)
-
         # Ensure we have data, then ensure value is going up and above 0
         if self.coordinator.data and self.coordinator.data['batterySoc']:
-            new_state = self.coordinator.data['batterySoc']['wh']
+            new_state = 0
+            try:
+                new_state = self.coordinator.data['chargeGraph']['now']['y']
+            except BaseException:
+                _LOGGER.debug("EnergyUsageSensor: ChargeGraph reading failed, falling back to batterySoc")
+                new_state = self.coordinator.data['batterySoc']['wh']
 
             # Let the state reset to 0, but not drop otherwise
             if not new_state or new_state <= 0:
                 _LOGGER.debug("EnergyUsageSensor: Resetting Wh reading to 0")
                 self._state = 0
             else:
-                self._state = max(0, self._state or 0, new_state)
+                # Allow a significant (90%+) drop, even if we dont hit exactly 0
+                if new_state > 0 and self._state > 0 and (new_state / self._state) < 0.1:
+                    self._state = new_state
+                else:
+                    self._state = max(0, self._state or 0, new_state)
+                
                 _LOGGER.debug("EnergyUsageSensor: New state is %s", self._state)
 
             self.async_write_ha_state()

@@ -253,7 +253,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
                 self._state = 0
             else:
                 # Allow a significant (90%+) drop, even if we dont hit exactly 0
-                if new_state > 0 and self._state > 0 and (new_state / self._state) < 0.1:
+                if self._state and self._state > 0 and new_state > 0 and (new_state / self._state) < 0.1:
                     self._state = new_state
                 else:
                     self._state = max(0, self._state or 0, new_state)

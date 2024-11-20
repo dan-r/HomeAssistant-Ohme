@@ -95,14 +95,6 @@ class OhmeApiClient:
 
     # Internal methods
 
-    def _last_second_of_month_timestamp(self):
-        """Get the last second of this month."""
-        dt = datetime.today()
-        dt = dt.replace(day=1) + timedelta(days=32)
-        dt = dt.replace(day=1, hour=0, minute=0, second=0,
-                        microsecond=0) - timedelta(seconds=1)
-        return int(dt.timestamp()*1e3)
-
     async def _handle_api_error(self, url, resp):
         """Raise an exception if API response failed."""
         if resp.status != 200:
@@ -334,13 +326,6 @@ class OhmeApiClient:
             self._solar_capable = True
 
         return True
-
-    async def async_get_charge_statistics(self):
-        """Get charge statistics. Currently this is just for all time (well, Jan 2019)."""
-        end_ts = self._last_second_of_month_timestamp()
-        resp = await self._get_request(f"/v1/chargeSessions/summary/users/{self._user_id}?&startTs={self._provision_date}&endTs={end_ts}&granularity=MONTH")
-
-        return resp['totalStats']
 
     async def async_get_advanced_settings(self):
         """Get advanced settings (mainly for CT clamp reading)"""

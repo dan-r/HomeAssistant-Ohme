@@ -6,7 +6,8 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed
 )
 
-from .const import DOMAIN, DATA_CLIENT
+from .const import DOMAIN, DATA_CLIENT, DEFAULT_INTERVAL_CHARGESESSIONS, DEFAULT_INTERVAL_ACCOUNTINFO, DEFAULT_INTERVAL_ADVANCED, DEFAULT_INTERVAL_SCHEDULES
+from .utils import get_option
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +21,9 @@ class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Charge Sessions",
-            update_interval=timedelta(seconds=30),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -42,7 +45,9 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Account Info",
-            update_interval=timedelta(minutes=1),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -55,28 +60,6 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
             raise UpdateFailed("Error communicating with API")
 
 
-class OhmeStatisticsCoordinator(DataUpdateCoordinator):
-    """Coordinator to update statistics from API periodically.
-       (But less so than the others)"""
-
-    def __init__(self, hass):
-        """Initialise coordinator."""
-        super().__init__(
-            hass,
-            _LOGGER,
-            name="Ohme Charger Statistics",
-            update_interval=timedelta(minutes=30),
-        )
-        self._client = hass.data[DOMAIN][DATA_CLIENT]
-
-    async def _async_update_data(self):
-        """Fetch data from API endpoint."""
-        try:
-            return await self._client.async_get_charge_statistics()
-
-        except BaseException:
-            raise UpdateFailed("Error communicating with API")
-
 class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
     """Coordinator to pull CT clamp reading."""
 
@@ -86,7 +69,9 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Advanced Settings",
-            update_interval=timedelta(minutes=1),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_advanced", DEFAULT_INTERVAL_ADVANCED)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -98,6 +83,7 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
         except BaseException:
             raise UpdateFailed("Error communicating with API")
 
+
 class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
     """Coordinator to pull charge schedules."""
 
@@ -107,7 +93,9 @@ class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Ohme Charge Schedules",
-            update_interval=timedelta(minutes=10),
+            update_interval=timedelta(minutes=
+                get_option(hass, "interval_schedules", DEFAULT_INTERVAL_SCHEDULES)
+            ),
         )
         self._client = hass.data[DOMAIN][DATA_CLIENT]
 
@@ -118,4 +106,3 @@ class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
 
         except BaseException:
             raise UpdateFailed("Error communicating with API")
-

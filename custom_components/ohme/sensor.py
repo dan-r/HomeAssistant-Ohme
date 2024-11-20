@@ -12,8 +12,8 @@ from homeassistant.const import UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_STATISTICS, COORDINATOR_ADVANCED
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeStatisticsCoordinator, OhmeAdvancedSettingsCoordinator
+from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED
+from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import next_slot, get_option, slot_list, slot_list_str
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,7 +28,6 @@ async def async_setup_entry(
     coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
-    stats_coordinator = coordinators[COORDINATOR_STATISTICS]
     adv_coordinator = coordinators[COORDINATOR_ADVANCED]
 
     sensors = [PowerDrawSensor(coordinator, hass, client),
@@ -41,9 +40,6 @@ async def async_setup_entry(
                SlotListSensor(coordinator, hass, client),
                BatterySOCSensor(coordinator, hass, client)]
     
-    if get_option(hass, "enable_accumulative_energy"):
-        sensors.append(AccumulativeEnergyUsageSensor(stats_coordinator, hass, client))
-
     async_add_entities(sensors, update_before_add=True)
 
 
@@ -213,52 +209,6 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
         return self.coordinator.data['clampAmps']
 
 
-class AccumulativeEnergyUsageSensor(CoordinatorEntity[OhmeStatisticsCoordinator], SensorEntity):
-    """Sensor for total energy usage."""
-    _attr_name = "Accumulative Energy Usage"
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-    _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_suggested_display_precision = 1
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL
-
-    def __init__(
-            self,
-            coordinator: OhmeStatisticsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_accumulative_energy", hass=hass)
-
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("accumulative_energy")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:lightning-bolt"
-
-    @property
-    def native_value(self):
-        """Get value from data returned from API by coordinator"""
-        if self.coordinator.data and self.coordinator.data['energyChargedTotalWh']:
-            return self.coordinator.data['energyChargedTotalWh']
-
-        return None
-
-
 class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
     """Sensor for total energy usage."""
     _attr_name = "Energy"
@@ -290,13 +240,25 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
     def _handle_coordinator_update(self) -> None:
         # Ensure we have data, then ensure value is going up and above 0
         if self.coordinator.data and self.coordinator.data['batterySoc']:
-            new_state = self.coordinator.data['batterySoc']['wh']
+            new_state = 0
+            try:
+                new_state = self.coordinator.data['chargeGraph']['now']['y']
+            except BaseException:
+                _LOGGER.debug("EnergyUsageSensor: ChargeGraph reading failed, falling back to batterySoc")
+                new_state = self.coordinator.data['batterySoc']['wh']
 
             # Let the state reset to 0, but not drop otherwise
             if not new_state or new_state <= 0:
+                _LOGGER.debug("EnergyUsageSensor: Resetting Wh reading to 0")
                 self._state = 0
             else:
-                self._state = max(0, self._state or 0, new_state)
+                # Allow a significant (90%+) drop, even if we dont hit exactly 0
+                if self._state and self._state > 0 and new_state > 0 and (new_state / self._state) < 0.1:
+                    self._state = new_state
+                else:
+                    self._state = max(0, self._state or 0, new_state)
+                
+                _LOGGER.debug("EnergyUsageSensor: New state is %s", self._state)
 
             self.async_write_ha_state()
 

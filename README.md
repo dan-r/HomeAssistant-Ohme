@@ -8,10 +8,10 @@ If you find any bugs or would like to request a feature, please open an issue.
 
 ## Tested Hardware
 This integration has been tested with the following hardware:
-* Ohme Home Pro [v1.32]
-* Ohme Home [v1.32]
-* Ohme Go [v1.32]
-* Ohme ePod [v2.12]
+* Ohme Home Pro
+* Ohme Home
+* Ohme Go
+* Ohme ePod
 
 ## External Software
 The 'Charge Slot Active' binary sensor mimics the `planned_dispatches` and `completed_dispatches` attributes from the [Octopus Energy](https://github.com/BottlecapDave/HomeAssistant-OctopusEnergy) integration, so should support external software which reads this such as [predbat](https://springfall2008.github.io/batpred/devices/#ohme).
@@ -57,7 +57,6 @@ This integration exposes the following entities:
 * Sensors (Other)
     * CT Reading (Amps) - Reading from attached CT clamp
     * Energy Usage (kWh) - Energy used in the current/last session. *This is supported by the energy dashboard.*
-    * Accumulative Energy Usage (kWh) - Deprecated - Total energy used by the charger (If enabled in options)
     * Battery State of Charge (%) - If your car is API connected this is read from the car, if not it is how much charge Ohme thinks it has added
 * Switches (Settings) - **Only options available to your charger model will show**
     * Lock Buttons - Locks buttons on charger
@@ -82,7 +81,7 @@ This integration exposes the following entities:
 Some options can be set from the 'Configure' menu in Home Assistant:
 * Never update an ongoing session - Override the default behaviour of the target time, percentage and preconditioning inputs and only ever update the schedule, not the current session. This was added as changing the current session can cause issues for customers on Intelligent Octopus Go.
 * Don't collapse charge slots - By default, adjacent slots are merged into one. This option shows every slot, as shown in the Ohme app.
-* Enable accumulative energy usage sensor - Enable the sensor showing an all-time incrementing energy usage counter. This causes issues with some accounts. 
+* Refresh Intervals - The refresh interval for the four coordinators listed below can be configured manually. The default times also serve as minimums, as to be respectful to Ohme, but you can choose to fetch data less frequently.
 
 
 ## Coordinators
@@ -102,7 +101,5 @@ The coordinators are listed with their refresh intervals below. Relevant coordin
 * OhmeAdvancedSettingsCoordinator (1m refresh)
     * Sensors: CT reading sensor
     * Binary Sensors: Charger online
-* OhmeStatisticsCoordinator (30m refresh)
-    * Sensors: Accumulative energy usage
 * OhmeChargeSchedulesCoordinator (10m refresh)
     * Inputs: Target time, target percentage and preconditioning (If car disconnected)

@@ -7,6 +7,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_ACCOUNTINFO, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
 from .utils import session_in_progress
+from .base import OhmeEntity
 
 
 async def async_setup_entry(
@@ -33,46 +34,26 @@ async def async_setup_entry(
     async_add_entities(numbers, update_before_add=True)
 
 
-class TargetPercentNumber(NumberEntity):
+class TargetPercentNumber(OhmeEntity, NumberEntity):
     """Target percentage sensor."""
-    _attr_name = "Target Percentage"
+    _attr_translation_key = "target_percentage"
+    _attr_icon = "mdi:battery-heart"
     _attr_device_class = NumberDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_suggested_display_precision = 0
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
-        self.coordinator = coordinator
+        super().__init__(coordinator, hass, client)
         self.coordinator_schedules = coordinator_schedules
-
-        self._client = client
-
-        self._state = None
-        self._last_updated = None
-        self._attributes = {}
-
-        self.entity_id = generate_entity_id(
-            "number.{}", "ohme_target_percent", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
         await super().async_added_to_hass()
         self.async_on_remove(
-            self.coordinator.async_add_listener(
-                self._handle_coordinator_update, None
-            )
-        )
-        self.async_on_remove(
             self.coordinator_schedules.async_add_listener(
                 self._handle_coordinator_update, None
             )
         )
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("target_percent")
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
@@ -85,11 +66,6 @@ class TargetPercentNumber(NumberEntity):
             await self._client.async_update_schedule(target_percent=int(value))
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:battery-heart"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -108,9 +84,10 @@ class TargetPercentNumber(NumberEntity):
         return self._state
 
 
-class PreconditioningNumber(NumberEntity):
+class PreconditioningNumber(OhmeEntity, NumberEntity):
     """Preconditioning sensor."""
-    _attr_name = "Preconditioning"
+    _attr_translation_key = "preconditioning"
+    _attr_icon = "mdi:air-conditioner"
     _attr_device_class = NumberDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
     _attr_native_min_value = 0
@@ -118,38 +95,17 @@ class PreconditioningNumber(NumberEntity):
     _attr_native_max_value = 60
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
-        self.coordinator = coordinator
+        super().__init__(coordinator, hass, client)
         self.coordinator_schedules = coordinator_schedules
-
-        self._client = client
-
-        self._state = None
-        self._last_updated = None
-        self._attributes = {}
-
-        self.entity_id = generate_entity_id(
-            "number.{}", "ohme_preconditioning", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
         await super().async_added_to_hass()
         self.async_on_remove(
-            self.coordinator.async_add_listener(
-                self._handle_coordinator_update, None
-            )
-        )
-        self.async_on_remove(
             self.coordinator_schedules.async_add_listener(
                 self._handle_coordinator_update, None
             )
         )
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("preconditioning")
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
@@ -168,11 +124,6 @@ class PreconditioningNumber(NumberEntity):
                 await self._client.async_update_schedule(pre_condition=True, pre_condition_length=int(value))
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:air-conditioner"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -197,36 +148,14 @@ class PreconditioningNumber(NumberEntity):
         return self._state
 
 
-class PriceCapNumber(NumberEntity):
-    _attr_name = "Price Cap"
+class PriceCapNumber(OhmeEntity, NumberEntity):
+    _attr_translation_key = "price_cap"
+    _attr_icon = "mdi:cash"
     _attr_device_class = NumberDeviceClass.MONETARY
     _attr_mode = NumberMode.BOX
     _attr_native_step = 0.1
     _attr_native_min_value = -100
     _attr_native_max_value = 100
-
-    def __init__(self, coordinator, hass: HomeAssistant, client):
-        self.coordinator = coordinator
-        self._client = client
-        self._state = None
-        self.entity_id = generate_entity_id(
-            "number.{}", "ohme_price_cap", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    async def async_added_to_hass(self) -> None:
-        """When entity is added to hass."""
-        await super().async_added_to_hass()
-        self.async_on_remove(
-            self.coordinator.async_add_listener(
-                self._handle_coordinator_update, None
-            )
-        )
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("price_cap")
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
@@ -248,11 +177,6 @@ class PriceCapNumber(NumberEntity):
             "currencyCode", "XXX")
 
         return penny_unit.get(currency, f"{currency}/100")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:cash"
 
     @callback
     def _handle_coordinator_update(self) -> None:

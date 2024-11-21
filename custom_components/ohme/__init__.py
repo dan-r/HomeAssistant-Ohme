@@ -1,5 +1,6 @@
 import logging
 from homeassistant import core
+from homeassistant.helpers.entity_registry import RegistryEntry, async_migrate_entries
 from .const import *
 from .utils import get_option
 from .api_client import OhmeApiClient
@@ -35,6 +36,25 @@ async def async_update_listener(hass, entry):
 
 async def async_setup_entry(hass, entry):
     """This is called from the config flow."""
+    
+    def _update_unique_id(entry: RegistryEntry) -> dict[str, str] | None:
+        """Update unique IDs from old format."""
+        if entry.unique_id.startswith("ohme_"):
+            parts = entry.unique_id.split('_')
+            legacy_id = '_'.join(parts[2:])
+
+            if legacy_id in LEGACY_MAPPING:
+                new_id = LEGACY_MAPPING[legacy_id]
+            else:
+                new_id = legacy_id
+
+            new_id = f"{parts[1]}_{new_id}"
+
+            return {"new_unique_id": new_id}
+        return None
+
+    await async_migrate_entries(hass, entry.entry_id, _update_unique_id)
+
     account_id = entry.data['email']
 
     hass.data.setdefault(DOMAIN, {})    

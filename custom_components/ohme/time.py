@@ -7,6 +7,7 @@ from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
 from .utils import session_in_progress
 from datetime import time as dt_time
+from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,43 +29,25 @@ async def async_setup_entry(
     async_add_entities(numbers, update_before_add=True)
 
 
-class TargetTime(TimeEntity):
+class TargetTime(OhmeEntity, TimeEntity):
     """Target time sensor."""
-    _attr_name = "Target Time"
+    _attr_translation_key = "target_time"
+    _attr_id = "target_time"
+    _attr_icon = "mdi:alarm-check"
 
     def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
-        self.coordinator = coordinator
+        super().__init__(coordinator, hass, client)
+
         self.coordinator_schedules = coordinator_schedules
-
-        self._client = client
-
-        self._state = None
-        self._last_updated = None
-        self._attributes = {}
-
-        self.entity_id = generate_entity_id(
-            "number.{}", "ohme_target_time", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
     
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
         await super().async_added_to_hass()
         self.async_on_remove(
-            self.coordinator.async_add_listener(
-                self._handle_coordinator_update, None
-            )
-        )
-        self.async_on_remove(
             self.coordinator_schedules.async_add_listener(
                 self._handle_coordinator_update, None
             )
         )
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("target_time")
 
     async def async_set_value(self, value: dt_time) -> None:
         """Update the current value."""
@@ -77,11 +60,6 @@ class TargetTime(TimeEntity):
             await self._client.async_update_schedule(target_time=(int(value.hour), int(value.minute)))
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:alarm-check"
 
     @callback
     def _handle_coordinator_update(self) -> None:

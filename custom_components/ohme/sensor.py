@@ -15,6 +15,7 @@ from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import next_slot, get_option, slot_list, slot_list_str
+from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,39 +46,12 @@ async def async_setup_entry(
     async_add_entities(sensors, update_before_add=True)
 
 
-class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class PowerDrawSensor(OhmeEntity, SensorEntity):
     """Sensor for car power draw."""
-    _attr_name = "Power Draw"
+    _attr_translation_key = "power_draw"
+    _attr_icon = "mdi:ev-station"
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_device_class = SensorDeviceClass.POWER
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_power_draw", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("power_draw")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:ev-station"
 
     @property
     def native_value(self):
@@ -87,39 +61,12 @@ class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEn
         return 0
 
 
-class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class CurrentDrawSensor(OhmeEntity, SensorEntity):
     """Sensor for car power draw."""
-    _attr_name = "Current Draw"
+    _attr_translation_key = "current_draw"
+    _attr_icon = "mdi:current-ac"
     _attr_device_class = SensorDeviceClass.CURRENT
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_current_draw", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("current_draw")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:current-ac"
 
     @property
     def native_value(self):
@@ -129,39 +76,12 @@ class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         return 0
 
 
-class VoltageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class VoltageSensor(OhmeEntity, SensorEntity):
     """Sensor for EVSE voltage."""
-    _attr_name = "Voltage"
+    _attr_translation_key = "voltage"
+    _attr_icon = "mdi:sine-wave"
     _attr_device_class = SensorDeviceClass.VOLTAGE
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_voltage", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("voltage")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:sine-wave"
 
     @property
     def native_value(self):
@@ -171,39 +91,12 @@ class VoltageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnti
         return None
 
 
-class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity):
+class CTSensor(OhmeEntity, SensorEntity):
     """Sensor for car power draw."""
-    _attr_name = "CT Reading"
+    _attr_translation_key = "ct_reading"
+    _attr_icon = "mdi:gauge"
     _attr_device_class = SensorDeviceClass.CURRENT
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
-
-    def __init__(
-            self,
-            coordinator: OhmeAdvancedSettingsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_ct_reading", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("ct_reading")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:gauge"
 
     @property
     def native_value(self):
@@ -211,32 +104,16 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
         return self.coordinator.data['clampAmps']
 
 
-class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class EnergyUsageSensor(OhmeEntity, SensorEntity):
     """Sensor for total energy usage."""
-    _attr_name = "Energy"
+    _attr_translation_key = "energy"
+    _attr_icon = "mdi:lightning-bolt-circle"
     _attr_has_entity_name = True
     _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
     _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 1
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(
-            self,
-            coordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-
-        self._attributes = {}
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_session_energy", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -265,53 +142,15 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
             self.async_write_ha_state()
 
     @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("session_energy")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:lightning-bolt-circle"
-
-    @property
     def native_value(self):
         return self._state
 
 
-class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class NextSlotStartSensor(OhmeEntity, SensorEntity):
     """Sensor for next smart charge slot start time."""
-    _attr_name = "Next Charge Slot Start"
+    _attr_translation_key = "next_slot_start"
+    _attr_icon = "mdi:clock-star-four-points"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-        self._hass = hass
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_next_slot", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("next_slot")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:clock-star-four-points"
 
     @property
     def native_value(self):
@@ -331,39 +170,11 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         self.async_write_ha_state()
 
 
-class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class NextSlotEndSensor(OhmeEntity, SensorEntity):
     """Sensor for next smart charge slot end time."""
-    _attr_name = "Next Charge Slot End"
+    _attr_translation_key = "next_slot_end"
+    _attr_icon = "mdi:clock-star-four-points-outline"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-        self._hass = hass
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_next_slot_end", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("next_slot_end")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:clock-star-four-points-outline"
 
     @property
     def native_value(self):
@@ -383,38 +194,10 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         self.async_write_ha_state()
 
 
-class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class SlotListSensor(OhmeEntity, SensorEntity):
     """Sensor for next smart charge slot end time."""
-    _attr_name = "Charge Slots"
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._slots = []
-        self._last_updated = None
-        self._client = client
-        self._hass = hass
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_charge_slots", hass=hass)
-
-        self._attr_device_info = client.get_device_info(
-        )
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("charge_slots")
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:timetable"
+    _attr_translation_key = "charge_slots"
+    _attr_icon = "mdi:timetable"
 
     @property
     def native_value(self):
@@ -439,34 +222,12 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         self.async_write_ha_state()
 
 
-class BatterySOCSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEntity):
+class BatterySOCSensor(OhmeEntity, SensorEntity):
     """Sensor for car battery SOC."""
-    _attr_name = "Battery SOC"
+    _attr_translation_key = "battery_soc"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_suggested_display_precision = 0
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._state = None
-        self._attributes = {}
-        self._last_updated = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "sensor.{}", "ohme_battery_soc", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("battery_soc")
 
     @property
     def icon(self):

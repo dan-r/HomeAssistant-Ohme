@@ -18,8 +18,10 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches."""
-    client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    account_id = config_entry.data['email']
+
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
+    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
 
     buttons = []
 

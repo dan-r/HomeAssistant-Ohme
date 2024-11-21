@@ -24,8 +24,10 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup sensors and configure coordinator."""
-    client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
+    account_id = config_entry.data['email']
+
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
+    coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     adv_coordinator = coordinators[COORDINATOR_ADVANCED]
@@ -64,7 +66,7 @@ class PowerDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEn
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_power_draw", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -106,7 +108,7 @@ class CurrentDrawSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_current_draw", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -148,7 +150,7 @@ class VoltageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnti
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_voltage", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -190,7 +192,7 @@ class CTSensor(CoordinatorEntity[OhmeAdvancedSettingsCoordinator], SensorEntity)
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_ct_reading", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -234,7 +236,7 @@ class EnergyUsageSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_session_energy", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = client.get_device_info()
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -298,7 +300,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_next_slot", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -322,7 +324,7 @@ class NextSlotStartSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sens
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = next_slot(self._hass, self.coordinator.data)['start']
+            self._state = next_slot(self._hass, self._client.email, self.coordinator.data)['start']
 
         self._last_updated = utcnow()
 
@@ -350,7 +352,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_next_slot_end", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -374,7 +376,7 @@ class NextSlotEndSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sensor
         if self.coordinator.data is None or self.coordinator.data["mode"] == "DISCONNECTED":
             self._state = None
         else:
-            self._state = next_slot(self._hass, self.coordinator.data)['end']
+            self._state = next_slot(self._hass, self._client.email, self.coordinator.data)['end']
 
         self._last_updated = utcnow()
 
@@ -401,7 +403,7 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_charge_slots", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
+        self._attr_device_info = client.get_device_info(
         )
 
     @property
@@ -428,10 +430,10 @@ class SlotListSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorEnt
             slots = slot_list(self.coordinator.data)
             
             # Store slots for external use
-            self._hass.data[DOMAIN][DATA_SLOTS] = slots
+            self._hass.data[DOMAIN][self._client.email][DATA_SLOTS] = slots
 
             # Convert list to text
-            self._state = slot_list_str(self._hass, slots)
+            self._state = slot_list_str(self._hass, self._client.email, slots)
             
         self._last_updated = utcnow()
         self.async_write_ha_state()
@@ -459,7 +461,7 @@ class BatterySOCSensor(CoordinatorEntity[OhmeChargeSessionsCoordinator], SensorE
         self.entity_id = generate_entity_id(
             "sensor.{}", "ohme_battery_soc", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info()
+        self._attr_device_info = client.get_device_info()
 
     @property
     def unique_id(self) -> str:

@@ -6,10 +6,10 @@ import pytz
 # _LOGGER = logging.getLogger(__name__)
 
 
-def next_slot(hass, data):
+def next_slot(hass, account_id, data):
     """Get the next charge slot start/end times."""
     slots = slot_list(data)
-    collapse_slots = not get_option(hass, "never_collapse_slots", False)
+    collapse_slots = not get_option(hass, account_id, "never_collapse_slots", False)
 
     start = None
     end = None
@@ -61,7 +61,7 @@ def slot_list(data):
     return slots
 
 
-def slot_list_str(hass, slots):
+def slot_list_str(hass, account_id, slots):
         """Convert slot list to string."""
 
         # Convert list to tuples of times
@@ -71,7 +71,7 @@ def slot_list_str(hass, slots):
 
         state = []
 
-        if not get_option(hass, "never_collapse_slots", False):
+        if not get_option(hass, account_id, "never_collapse_slots", False):
             # Collapse slots so consecutive slots become one
             for i in range(len(t_slots)):
                 if not state or state[-1][1] != t_slots[i][0]:
@@ -111,11 +111,11 @@ def time_next_occurs(hour, minute):
     return target
 
 
-def session_in_progress(hass, data):
+def session_in_progress(hass, account_id, data):
     """Is there a session in progress?
        Used to check if we should update the current session rather than the first schedule."""
     # If config option set, never update session specific schedule
-    if get_option(hass, "never_session_specific"):
+    if get_option(hass, account_id, "never_session_specific"):
         return False
     
     # Default to False with no data
@@ -129,6 +129,6 @@ def session_in_progress(hass, data):
     return True
 
 
-def get_option(hass, option, default=False):
+def get_option(hass, account_id, option, default=False):
     """Return option value, with settable default."""
-    return hass.data[DOMAIN][DATA_OPTIONS].get(option, default)
+    return hass.data[DOMAIN][account_id][DATA_OPTIONS].get(option, default)

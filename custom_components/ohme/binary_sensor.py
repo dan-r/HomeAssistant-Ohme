@@ -21,9 +21,10 @@ async def async_setup_entry(
     async_add_entities,
 ):
     """Setup sensors and configure coordinator."""
-    client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
-    coordinator_advanced = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_ADVANCED]
+    account_id = config_entry.data['email']
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
+    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    coordinator_advanced = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_ADVANCED]
 
     sensors = [ConnectedBinarySensor(coordinator, hass, client),
                ChargingBinarySensor(coordinator, hass, client),
@@ -57,8 +58,7 @@ class ConnectedBinarySensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_connected", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
+        self._attr_device_info = client.get_device_info()
 
     @property
     def icon(self):
@@ -110,8 +110,7 @@ class ChargingBinarySensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_car_charging", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
+        self._attr_device_info = client.get_device_info()
 
     @property
     def icon(self):
@@ -230,8 +229,7 @@ class PendingApprovalBinarySensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_pending_approval", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
+        self._attr_device_info = client.get_device_info()
 
     @property
     def icon(self):
@@ -276,8 +274,7 @@ class CurrentSlotBinarySensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_slot_active", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
+        self._attr_device_info = client.get_device_info()
 
     @property
     def icon(self):
@@ -293,7 +290,7 @@ class CurrentSlotBinarySensor(
     def extra_state_attributes(self):
         """Attributes of the sensor."""
         now = utcnow()
-        slots = self._hass.data[DOMAIN][DATA_SLOTS] if DATA_SLOTS in self._hass.data[DOMAIN] else []
+        slots = self._hass.data[DOMAIN][self._client.email][DATA_SLOTS] if DATA_SLOTS in self._hass.data[DOMAIN][self._client.email] else []
 
         return {
             "planned_dispatches": [x for x in slots if not x['end'] or x['end'] > now],
@@ -341,8 +338,7 @@ class ChargerOnlineBinarySensor(
         self.entity_id = generate_entity_id(
             "binary_sensor.{}", "ohme_charger_online", hass=hass)
 
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
+        self._attr_device_info = client.get_device_info()
 
     @property
     def icon(self):

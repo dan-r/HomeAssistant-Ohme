@@ -20,7 +20,7 @@ class OhmeApiClient:
             raise Exception("Credentials not provided")
 
         # Credentials from configuration
-        self._email = email
+        self.email = email
         self._password = password
 
         # Charger and its capabilities
@@ -55,7 +55,7 @@ class OhmeApiClient:
         """Refresh the user auth token from the stored credentials."""
         async with self._auth_session.post(
             f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key={GOOGLE_API_KEY}",
-            data={"email": self._email, "password": self._password,
+            data={"email": self.email, "password": self._password,
                   "returnSecureToken": True}
         ) as resp:
             if resp.status != 200:
@@ -303,20 +303,20 @@ class OhmeApiClient:
 
         device = resp['chargeDevices'][0]
 
-        info = DeviceInfo(
-            identifiers={(DOMAIN, "ohme_charger")},
+        self._capabilities = device['modelCapabilities']
+        self._user_id = resp['user']['id']
+        self._serial = device['id']
+        self._provision_date = device['provisioningTs']
+
+        self._device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"ohme_charger_{self._serial}")},
             name=device['modelTypeDisplayName'],
             manufacturer="Ohme",
             model=device['modelTypeDisplayName'].replace("Ohme ", ""),
             sw_version=device['firmwareVersionLabel'],
-            serial_number=device['id']
+            serial_number=self._serial
         )
 
-        self._capabilities = device['modelCapabilities']
-        self._user_id = resp['user']['id']
-        self._serial = device['id']
-        self._device_info = info
-        self._provision_date = device['provisioningTs']
 
         if resp['tariff'] is not None and resp['tariff']['dsrTariff']:
             self._disable_cap = True

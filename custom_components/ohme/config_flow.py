@@ -25,7 +25,7 @@ class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "auth_error"
             else:
                 return self.async_create_entry(
-                    title="Ohme Charger",
+                    title=info['email'],
                     data=info
                 )
 

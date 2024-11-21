@@ -15,17 +15,17 @@ _LOGGER = logging.getLogger(__name__)
 class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
     """Coordinator to pull main charge state and power/current draw."""
 
-    def __init__(self, hass):
+    def __init__(self, hass, account_id):
         """Initialise coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name="Ohme Charge Sessions",
             update_interval=timedelta(minutes=
-                get_option(hass, "interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS)
+                get_option(hass, account_id, "interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS)
             ),
         )
-        self._client = hass.data[DOMAIN][DATA_CLIENT]
+        self._client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
@@ -39,17 +39,17 @@ class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
 class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
     """Coordinator to pull charger settings."""
 
-    def __init__(self, hass):
+    def __init__(self, hass, account_id):
         """Initialise coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name="Ohme Account Info",
             update_interval=timedelta(minutes=
-                get_option(hass, "interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO)
+                get_option(hass, account_id, "interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO)
             ),
         )
-        self._client = hass.data[DOMAIN][DATA_CLIENT]
+        self._client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
@@ -63,17 +63,17 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
 class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
     """Coordinator to pull CT clamp reading."""
 
-    def __init__(self, hass):
+    def __init__(self, hass, account_id):
         """Initialise coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name="Ohme Advanced Settings",
             update_interval=timedelta(minutes=
-                get_option(hass, "interval_advanced", DEFAULT_INTERVAL_ADVANCED)
+                get_option(hass, account_id, "interval_advanced", DEFAULT_INTERVAL_ADVANCED)
             ),
         )
-        self._client = hass.data[DOMAIN][DATA_CLIENT]
+        self._client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
@@ -87,17 +87,17 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
 class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
     """Coordinator to pull charge schedules."""
 
-    def __init__(self, hass):
+    def __init__(self, hass, account_id):
         """Initialise coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name="Ohme Charge Schedules",
             update_interval=timedelta(minutes=
-                get_option(hass, "interval_schedules", DEFAULT_INTERVAL_SCHEDULES)
+                get_option(hass, account_id, "interval_schedules", DEFAULT_INTERVAL_SCHEDULES)
             ),
         )
-        self._client = hass.data[DOMAIN][DATA_CLIENT]
+        self._client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""

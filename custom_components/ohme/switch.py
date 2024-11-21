@@ -23,11 +23,13 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
+    account_id = config_entry.data['email']
+
+    coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     accountinfo_coordinator = coordinators[COORDINATOR_ACCOUNTINFO]
-    client = hass.data[DOMAIN][DATA_CLIENT]
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),
                 OhmeMaxChargeSwitch(coordinator, hass, client)

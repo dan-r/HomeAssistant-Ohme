@@ -17,9 +17,10 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
+    account_id = config_entry.data['email']
 
-    client = hass.data[DOMAIN][DATA_CLIENT]
+    coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     numbers = [TargetTime(coordinators[COORDINATOR_CHARGESESSIONS],
                           coordinators[COORDINATOR_SCHEDULES], hass, client)]
@@ -68,7 +69,7 @@ class TargetTime(TimeEntity):
     async def async_set_value(self, value: dt_time) -> None:
         """Update the current value."""
         # If session in progress, update this session, if not update the first schedule
-        if session_in_progress(self.hass, self.coordinator.data):
+        if session_in_progress(self.hass, self._client.email, self.coordinator.data):
             await self._client.async_apply_session_rule(target_time=(int(value.hour), int(value.minute)))
             await asyncio.sleep(1)
             await self.coordinator.async_refresh()
@@ -87,7 +88,7 @@ class TargetTime(TimeEntity):
         """Get value from data returned from API by coordinator"""
         # Read with the same logic as setting
         target = None
-        if session_in_progress(self.hass, self.coordinator.data):
+        if session_in_progress(self.hass, self._client.email, self.coordinator.data):
             target = self.coordinator.data['appliedRule']['targetTime']
         elif self.coordinator_schedules.data:
             target = self.coordinator_schedules.data['targetTime']

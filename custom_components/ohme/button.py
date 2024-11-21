@@ -43,4 +43,4 @@ class OhmeApproveChargeButton(OhmeEntity, ButtonEntity):
         await self._client.async_approve_charge()
 
         await asyncio.sleep(1)
-        await self._coordinator.async_refresh()
+        await self.coordinator.async_refresh()

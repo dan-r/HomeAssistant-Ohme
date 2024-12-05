@@ -20,7 +20,7 @@ class OhmeApiClient:
             raise Exception("Credentials not provided")
 
         # Credentials from configuration
-        self._email = email
+        self.email = email
         self._password = password
 
         # Charger and its capabilities
@@ -38,7 +38,7 @@ class OhmeApiClient:
 
         # User info
         self._user_id = ""
-        self._serial = ""
+        self.serial = ""
 
         # Cache the last rule to use when we disable max charge or change schedule
         self._last_rule = {}
@@ -55,7 +55,7 @@ class OhmeApiClient:
         """Refresh the user auth token from the stored credentials."""
         async with self._auth_session.post(
             f"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key={GOOGLE_API_KEY}",
-            data={"email": self._email, "password": self._password,
+            data={"email": self.email, "password": self._password,
                   "returnSecureToken": True}
         ) as resp:
             if resp.status != 200:
@@ -171,29 +171,26 @@ class OhmeApiClient:
     def get_device_info(self):
         return self._device_info
 
-    def get_unique_id(self, name):
-        return f"ohme_{self._serial}_{name}"
-
     # Push methods
 
     async def async_pause_charge(self):
         """Pause an ongoing charge"""
-        result = await self._post_request(f"/v1/chargeSessions/{self._serial}/stop", skip_json=True)
+        result = await self._post_request(f"/v1/chargeSessions/{self.serial}/stop", skip_json=True)
         return bool(result)
 
     async def async_resume_charge(self):
         """Resume a paused charge"""
-        result = await self._post_request(f"/v1/chargeSessions/{self._serial}/resume", skip_json=True)
+        result = await self._post_request(f"/v1/chargeSessions/{self.serial}/resume", skip_json=True)
         return bool(result)
 
     async def async_approve_charge(self):
         """Approve a charge"""
-        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/approve?approve=true")
+        result = await self._put_request(f"/v1/chargeSessions/{self.serial}/approve?approve=true")
         return bool(result)
 
     async def async_max_charge(self, state=True):
         """Enable max charge"""
-        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?maxCharge=" + str(state).lower())
+        result = await self._put_request(f"/v1/chargeSessions/{self.serial}/rule?maxCharge=" + str(state).lower())
         return bool(result)
 
     async def async_apply_session_rule(self, max_price=None, target_time=None, target_percent=None, pre_condition=None, pre_condition_length=None):
@@ -228,7 +225,7 @@ class OhmeApiClient:
         max_price = 'true' if max_price else 'false'
         pre_condition = 'true' if pre_condition else 'false'
 
-        result = await self._put_request(f"/v1/chargeSessions/{self._serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
+        result = await self._put_request(f"/v1/chargeSessions/{self.serial}/rule?enableMaxPrice={max_price}&targetTs={target_ts}&enablePreconditioning={pre_condition}&toPercent={target_percent}&preconditionLengthMins={pre_condition_length}")
         return bool(result)
 
     async def async_change_price_cap(self, enabled=None, cap=None):
@@ -275,7 +272,7 @@ class OhmeApiClient:
 
     async def async_set_configuration_value(self, values):
         """Set a configuration value or values."""
-        result = await self._put_request(f"/v1/chargeDevices/{self._serial}/appSettings", data=values)
+        result = await self._put_request(f"/v1/chargeDevices/{self.serial}/appSettings", data=values)
         return bool(result)
 
     # Pull methods
@@ -303,20 +300,20 @@ class OhmeApiClient:
 
         device = resp['chargeDevices'][0]
 
-        info = DeviceInfo(
-            identifiers={(DOMAIN, "ohme_charger")},
+        self._capabilities = device['modelCapabilities']
+        self._user_id = resp['user']['id']
+        self.serial = device['id']
+        self._provision_date = device['provisioningTs']
+
+        self._device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"ohme_charger_{self.serial}")},
             name=device['modelTypeDisplayName'],
             manufacturer="Ohme",
             model=device['modelTypeDisplayName'].replace("Ohme ", ""),
             sw_version=device['firmwareVersionLabel'],
-            serial_number=device['id']
+            serial_number=self.serial
         )
 
-        self._capabilities = device['modelCapabilities']
-        self._user_id = resp['user']['id']
-        self._serial = device['id']
-        self._device_info = info
-        self._provision_date = device['provisioningTs']
 
         if resp['tariff'] is not None and resp['tariff']['dsrTariff']:
             self._disable_cap = True
@@ -329,7 +326,7 @@ class OhmeApiClient:
 
     async def async_get_advanced_settings(self):
         """Get advanced settings (mainly for CT clamp reading)"""
-        resp = await self._get_request(f"/v1/chargeDevices/{self._serial}/advancedSettings")
+        resp = await self._get_request(f"/v1/chargeDevices/{self.serial}/advancedSettings")
 
         # If we ever get a reading above 0, assume CT connected
         if resp['clampAmps'] and resp['clampAmps'] > 0:

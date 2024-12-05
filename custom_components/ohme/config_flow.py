@@ -18,14 +18,14 @@ class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if info is not None:
-            await self.async_set_unique_id("ohme")
+            await self.async_set_unique_id(info['email'])
             self._abort_if_unique_id_configured()
             instance = OhmeApiClient(info['email'], info['password'])
             if await instance.async_refresh_session() is None:
                 errors["base"] = "auth_error"
             else:
                 return self.async_create_entry(
-                    title="Ohme Charger",
+                    title=info['email'],
                     data=info
                 )
 

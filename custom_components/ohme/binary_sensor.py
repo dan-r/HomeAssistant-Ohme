@@ -10,8 +10,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.util.dt import (utcnow)
 from .const import DOMAIN, DATA_COORDINATORS, DATA_SLOTS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ADVANCED, DATA_CLIENT
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeAdvancedSettingsCoordinator
 from .utils import in_slot
+from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,9 +21,10 @@ async def async_setup_entry(
     async_add_entities,
 ):
     """Setup sensors and configure coordinator."""
-    client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
-    coordinator_advanced = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_ADVANCED]
+    account_id = config_entry.data['email']
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
+    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    coordinator_advanced = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_ADVANCED]
 
     sensors = [ConnectedBinarySensor(coordinator, hass, client),
                ChargingBinarySensor(coordinator, hass, client),
@@ -35,40 +36,13 @@ async def async_setup_entry(
 
 
 class ConnectedBinarySensor(
-        CoordinatorEntity[OhmeChargeSessionsCoordinator],
+        OhmeEntity,
         BinarySensorEntity):
     """Binary sensor for if car is plugged in."""
 
-    _attr_name = "Car Connected"
+    _attr_translation_key = "car_connected"
+    _attr_icon = "mdi:ev-plug-type2"
     _attr_device_class = BinarySensorDeviceClass.PLUG
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._attributes = {}
-        self._last_updated = None
-        self._state = False
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "binary_sensor.{}", "ohme_car_connected", hass=hass)
-
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:ev-plug-type2"
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("car_connected")
 
     @property
     def is_on(self) -> bool:
@@ -81,11 +55,12 @@ class ConnectedBinarySensor(
 
 
 class ChargingBinarySensor(
-        CoordinatorEntity[OhmeChargeSessionsCoordinator],
+        OhmeEntity,
         BinarySensorEntity):
     """Binary sensor for if car is charging."""
 
-    _attr_name = "Car Charging"
+    _attr_translation_key = "car_charging"
+    _attr_icon = "mdi:battery-charging-100"
     _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
 
     def __init__(
@@ -93,12 +68,7 @@ class ChargingBinarySensor(
             coordinator: OhmeChargeSessionsCoordinator,
             hass: HomeAssistant,
             client):
-        super().__init__(coordinator=coordinator)
-
-        self._attributes = {}
-        self._last_updated = None
-        self._state = False
-        self._client = client
+        super().__init__(coordinator, hass, client)
 
         # Cache the last power readings
         self._last_reading = None
@@ -106,22 +76,6 @@ class ChargingBinarySensor(
 
         # State variables for charge state detection
         self._trigger_count = 0
-
-        self.entity_id = generate_entity_id(
-            "binary_sensor.{}", "ohme_car_charging", hass=hass)
-
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:battery-charging-100"
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("ohme_car_charging")
 
     @property
     def is_on(self) -> bool:
@@ -209,39 +163,12 @@ class ChargingBinarySensor(
 
 
 class PendingApprovalBinarySensor(
-        CoordinatorEntity[OhmeChargeSessionsCoordinator],
+        OhmeEntity,
         BinarySensorEntity):
     """Binary sensor for if a charge is pending approval."""
 
-    _attr_name = "Pending Approval"
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._attributes = {}
-        self._last_updated = None
-        self._state = False
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "binary_sensor.{}", "ohme_pending_approval", hass=hass)
-
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:alert-decagram"
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("pending_approval")
+    _attr_translation_key = "pending_approval"
+    _attr_icon = "mdi:alert-decagram"
 
     @property
     def is_on(self) -> bool:
@@ -255,45 +182,18 @@ class PendingApprovalBinarySensor(
 
 
 class CurrentSlotBinarySensor(
-        CoordinatorEntity[OhmeChargeSessionsCoordinator],
+        OhmeEntity,
         BinarySensorEntity):
     """Binary sensor for if we are currently in a smart charge slot."""
 
-    _attr_name = "Charge Slot Active"
-
-    def __init__(
-            self,
-            coordinator: OhmeChargeSessionsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._last_updated = None
-        self._state = False
-        self._client = client
-        self._hass = hass
-
-        self.entity_id = generate_entity_id(
-            "binary_sensor.{}", "ohme_slot_active", hass=hass)
-
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:calendar-check"
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("ohme_slot_active")
+    _attr_translation_key = "slot_active"
+    _attr_icon = "mdi:calendar-check"
 
     @property
     def extra_state_attributes(self):
         """Attributes of the sensor."""
         now = utcnow()
-        slots = self._hass.data[DOMAIN][DATA_SLOTS] if DATA_SLOTS in self._hass.data[DOMAIN] else []
+        slots = self._hass.data[DOMAIN][self._client.email][DATA_SLOTS] if DATA_SLOTS in self._hass.data[DOMAIN][self._client.email] else []
 
         return {
             "planned_dispatches": [x for x in slots if not x['end'] or x['end'] > now],
@@ -319,40 +219,13 @@ class CurrentSlotBinarySensor(
         self.async_write_ha_state()
 
 class ChargerOnlineBinarySensor(
-        CoordinatorEntity[OhmeAdvancedSettingsCoordinator],
+        OhmeEntity,
         BinarySensorEntity):
     """Binary sensor for if charger is online."""
 
-    _attr_name = "Charger Online"
+    _attr_translation_key = "charger_online"
+    _attr_icon = "mdi:web"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
-
-    def __init__(
-            self,
-            coordinator: OhmeAdvancedSettingsCoordinator,
-            hass: HomeAssistant,
-            client):
-        super().__init__(coordinator=coordinator)
-
-        self._attributes = {}
-        self._last_updated = None
-        self._state = None
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "binary_sensor.{}", "ohme_charger_online", hass=hass)
-
-        self._attr_device_info = hass.data[DOMAIN][DATA_CLIENT].get_device_info(
-        )
-
-    @property
-    def icon(self):
-        """Icon of the sensor."""
-        return "mdi:web"
-
-    @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the sensor."""
-        return self._client.get_unique_id("charger_online")
 
     @property
     def is_on(self) -> bool:

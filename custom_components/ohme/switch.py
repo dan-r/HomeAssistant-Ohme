@@ -12,7 +12,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.util.dt import (utcnow)
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
-from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator
+from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,11 +23,13 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    coordinators = hass.data[DOMAIN][DATA_COORDINATORS]
+    account_id = config_entry.data['email']
+
+    coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     accountinfo_coordinator = coordinators[COORDINATOR_ACCOUNTINFO]
-    client = hass.data[DOMAIN][DATA_CLIENT]
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
     switches = [OhmePauseChargeSwitch(coordinator, hass, client),
                 OhmeMaxChargeSwitch(coordinator, hass, client)
@@ -45,49 +47,26 @@ async def async_setup_entry(
     if client.is_capable("buttonsLockable"):
         switches.append(
             OhmeConfigurationSwitch(
-                accountinfo_coordinator, hass, client, "Lock Buttons", "lock", "buttonsLocked")
+                accountinfo_coordinator, hass, client, "lock_buttons", "lock", "buttonsLocked")
         )
     if client.is_capable("pluginsRequireApprovalMode"):
         switches.append(
             OhmeConfigurationSwitch(accountinfo_coordinator, hass, client,
-                                    "Require Approval", "check-decagram", "pluginsRequireApproval")
+                                    "require_approval", "check-decagram", "pluginsRequireApproval")
         )
     if client.is_capable("stealth"):
         switches.append(
             OhmeConfigurationSwitch(accountinfo_coordinator, hass, client,
-                                    "Sleep When Inactive", "power-sleep", "stealthEnabled")
+                                    "sleep_when_inactive", "power-sleep", "stealthEnabled")
         )
 
     async_add_entities(switches, update_before_add=True)
 
 
-class OhmePauseChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):
+class OhmePauseChargeSwitch(OhmeEntity, SwitchEntity):
     """Switch for pausing a charge."""
-    _attr_name = "Pause Charge"
-
-    def __init__(self, coordinator, hass: HomeAssistant, client):
-        super().__init__(coordinator=coordinator)
-
-        self._client = client
-
-        self._state = False
-        self._last_updated = None
-        self._attributes = {}
-
-        self.entity_id = generate_entity_id(
-            "switch.{}", "ohme_pause_charge", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("pause_charge")
-
-    @property
-    def icon(self):
-        """Icon of the switch."""
-        return "mdi:pause"
+    _attr_translation_key = "pause_charge"
+    _attr_icon = "mdi:pause"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -118,33 +97,10 @@ class OhmePauseChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Sw
         await self.coordinator.async_refresh()
 
 
-class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], SwitchEntity):
+class OhmeMaxChargeSwitch(OhmeEntity, SwitchEntity):
     """Switch for pausing a charge."""
-    _attr_name = "Max Charge"
-
-    def __init__(self, coordinator, hass: HomeAssistant, client):
-        super().__init__(coordinator=coordinator)
-
-        self._client = client
-
-        self._state = False
-        self._last_updated = None
-        self._attributes = {}
-
-        self.entity_id = generate_entity_id(
-            "switch.{}", "ohme_max_charge", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("max_charge")
-
-    @property
-    def icon(self):
-        """Icon of the switch."""
-        return "mdi:battery-arrow-up"
+    _attr_translation_key = "max_charge"
+    _attr_icon = "mdi:battery-arrow-up"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -177,35 +133,16 @@ class OhmeMaxChargeSwitch(CoordinatorEntity[OhmeChargeSessionsCoordinator], Swit
         await self.coordinator.async_refresh()
 
 
-class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
+class OhmeConfigurationSwitch(OhmeEntity, SwitchEntity):
     """Switch for changing configuration options."""
 
-    def __init__(self, coordinator, hass: HomeAssistant, client, name, icon, config_key):
-        super().__init__(coordinator=coordinator)
-
-        self._client = client
-
-        self._state = False
-        self._last_updated = None
-        self._attributes = {}
-
-        self._icon = icon
-        self._attr_name = name
+    def __init__(self, coordinator, hass: HomeAssistant, client, translation_key, icon, config_key):
+        self._attr_icon = f"mdi:{icon}"
+        self._attr_translation_key = translation_key
         self._config_key = config_key
-        self.entity_id = generate_entity_id(
-            "switch.{}", "ohme_" + name.lower().replace(' ', '_'), hass=hass)
+        self.legacy_id = config_key
 
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id(self._config_key)
-
-    @property
-    def icon(self):
-        """Icon of the switch."""
-        return f"mdi:{self._icon}"
+        super().__init__(coordinator, hass, client)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -235,33 +172,11 @@ class OhmeConfigurationSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Swi
         await self.coordinator.async_refresh()
 
 
-class OhmeSolarBoostSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
+class OhmeSolarBoostSwitch(OhmeEntity, SwitchEntity):
     """Switch for changing configuration options."""
 
-    def __init__(self, coordinator, hass: HomeAssistant, client):
-        super().__init__(coordinator=coordinator)
-
-        self._client = client
-
-        self._state = False
-        self._last_updated = None
-        self._attributes = {}
-
-        self._attr_name = "Solar Boost"
-        self.entity_id = generate_entity_id(
-            "switch.{}", "ohme_solar_boost", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("solarMode")
-
-    @property
-    def icon(self):
-        """Icon of the switch."""
-        return "mdi:solar-power"
+    _attr_translation_key = "solar_mode"
+    _attr_icon = "mdi:solar-power"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -291,29 +206,10 @@ class OhmeSolarBoostSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], Switch
         await self.coordinator.async_refresh()
 
 
-class OhmePriceCapSwitch(CoordinatorEntity[OhmeAccountInfoCoordinator], SwitchEntity):
+class OhmePriceCapSwitch(OhmeEntity, SwitchEntity):
     """Switch for enabling price cap."""
-    _attr_name = "Enable Price Cap"
-
-    def __init__(self, coordinator, hass: HomeAssistant, client):
-        super().__init__(coordinator=coordinator)
-
-        self._client = client
-
-        self.entity_id = generate_entity_id(
-            "switch.{}", "ohme_price_cap_enabled", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("price_cap_enabled")
-
-    @property
-    def icon(self):
-        """Icon of the switch."""
-        return f"mdi:car-speed-limiter"
+    _attr_translation_key = "enable_price_cap"
+    _attr_icon = "mdi:car-speed-limiter"
 
     @callback
     def _handle_coordinator_update(self) -> None:

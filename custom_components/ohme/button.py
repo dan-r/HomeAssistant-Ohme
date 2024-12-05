@@ -7,7 +7,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.components.button import ButtonEntity
 
 from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS
-from .coordinator import OhmeChargeSessionsCoordinator
+from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,8 +18,10 @@ async def async_setup_entry(
     async_add_entities
 ):
     """Setup switches."""
-    client = hass.data[DOMAIN][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    account_id = config_entry.data['email']
+
+    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
+    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
 
     buttons = []
 
@@ -31,36 +33,14 @@ async def async_setup_entry(
         async_add_entities(buttons, update_before_add=True)
 
 
-class OhmeApproveChargeButton(ButtonEntity):
+class OhmeApproveChargeButton(OhmeEntity, ButtonEntity):
     """Button for approving a charge."""
-    _attr_name = "Approve Charge"
-
-    def __init__(self, coordinator: OhmeChargeSessionsCoordinator, hass: HomeAssistant, client):
-        self._client = client
-        self._coordinator = coordinator
-
-        self._state = False
-        self._last_updated = None
-        self._attributes = {}
-
-        self.entity_id = generate_entity_id(
-            "switch.{}", "ohme_approve_charge", hass=hass)
-
-        self._attr_device_info = client.get_device_info()
-
-    @property
-    def unique_id(self):
-        """The unique ID of the switch."""
-        return self._client.get_unique_id("approve_charge")
-
-    @property
-    def icon(self):
-        """Icon of the switch."""
-        return "mdi:check-decagram-outline"
+    _attr_translation_key = "approve_charge"
+    _attr_icon = "mdi:check-decagram-outline"
 
     async def async_press(self):
         """Approve the charge."""
         await self._client.async_approve_charge()
 
         await asyncio.sleep(1)
-        await self._coordinator.async_refresh()
+        await self.coordinator.async_refresh()

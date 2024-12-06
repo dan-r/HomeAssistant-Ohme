@@ -1,4 +1,5 @@
 """Tests for the utils."""
+
 from unittest import mock
 import random
 from time import time

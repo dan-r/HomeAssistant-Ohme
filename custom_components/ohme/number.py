@@ -5,26 +5,41 @@ from homeassistant.components.number.const import NumberMode, PERCENTAGE
 from homeassistant.const import UnitOfTime
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.core import callback, HomeAssistant
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_ACCOUNTINFO, COORDINATOR_CHARGESESSIONS, COORDINATOR_SCHEDULES
+from .const import (
+    DOMAIN,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    COORDINATOR_ACCOUNTINFO,
+    COORDINATOR_CHARGESESSIONS,
+    COORDINATOR_SCHEDULES,
+)
 from .utils import session_in_progress
 from .base import OhmeEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
-    async_add_entities
+    hass: HomeAssistant, config_entry: config_entries.ConfigEntry, async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    account_id = config_entry.data['email']
+    account_id = config_entry.data["email"]
 
     coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
     client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
-    numbers = [TargetPercentNumber(
-        coordinators[COORDINATOR_CHARGESESSIONS], coordinators[COORDINATOR_SCHEDULES], hass, client),
+    numbers = [
+        TargetPercentNumber(
+            coordinators[COORDINATOR_CHARGESESSIONS],
+            coordinators[COORDINATOR_SCHEDULES],
+            hass,
+            client,
+        ),
         PreconditioningNumber(
-        coordinators[COORDINATOR_CHARGESESSIONS], coordinators[COORDINATOR_SCHEDULES], hass, client)]
+            coordinators[COORDINATOR_CHARGESESSIONS],
+            coordinators[COORDINATOR_SCHEDULES],
+            hass,
+            client,
+        ),
+    ]
 
     if client.cap_available():
         numbers.append(
@@ -36,6 +51,7 @@ async def async_setup_entry(
 
 class TargetPercentNumber(OhmeEntity, NumberEntity):
     """Target percentage sensor."""
+
     _attr_translation_key = "target_percentage"
     _attr_icon = "mdi:battery-heart"
     _attr_device_class = NumberDeviceClass.BATTERY
@@ -72,10 +88,9 @@ class TargetPercentNumber(OhmeEntity, NumberEntity):
         """Get value from data returned from API by coordinator"""
         # Set with the same logic as reading
         if session_in_progress(self.hass, self._client.email, self.coordinator.data):
-            target = round(
-                self.coordinator.data['appliedRule']['targetPercent'])
+            target = round(self.coordinator.data["appliedRule"]["targetPercent"])
         elif self.coordinator_schedules.data:
-            target = round(self.coordinator_schedules.data['targetPercent'])
+            target = round(self.coordinator_schedules.data["targetPercent"])
 
         self._state = target if target > 0 else None
 
@@ -86,6 +101,7 @@ class TargetPercentNumber(OhmeEntity, NumberEntity):
 
 class PreconditioningNumber(OhmeEntity, NumberEntity):
     """Preconditioning sensor."""
+
     _attr_translation_key = "preconditioning"
     _attr_icon = "mdi:air-conditioner"
     _attr_device_class = NumberDeviceClass.DURATION
@@ -114,14 +130,18 @@ class PreconditioningNumber(OhmeEntity, NumberEntity):
             if value == 0:
                 await self._client.async_apply_session_rule(pre_condition=False)
             else:
-                await self._client.async_apply_session_rule(pre_condition=True, pre_condition_length=int(value))
+                await self._client.async_apply_session_rule(
+                    pre_condition=True, pre_condition_length=int(value)
+                )
             await asyncio.sleep(1)
             await self.coordinator.async_refresh()
         else:
             if value == 0:
                 await self._client.async_update_schedule(pre_condition=False)
             else:
-                await self._client.async_update_schedule(pre_condition=True, pre_condition_length=int(value))
+                await self._client.async_update_schedule(
+                    pre_condition=True, pre_condition_length=int(value)
+                )
             await asyncio.sleep(1)
             await self.coordinator_schedules.async_refresh()
 
@@ -131,15 +151,25 @@ class PreconditioningNumber(OhmeEntity, NumberEntity):
         precondition = None
         # Set with the same logic as reading
         if session_in_progress(self.hass, self._client.email, self.coordinator.data):
-            enabled = self.coordinator.data['appliedRule'].get(
-                'preconditioningEnabled', False)
-            precondition = 0 if not enabled else self.coordinator.data['appliedRule'].get(
-                'preconditionLengthMins', None)
+            enabled = self.coordinator.data["appliedRule"].get(
+                "preconditioningEnabled", False
+            )
+            precondition = (
+                0
+                if not enabled
+                else self.coordinator.data["appliedRule"].get(
+                    "preconditionLengthMins", None
+                )
+            )
         elif self.coordinator_schedules.data:
             enabled = self.coordinator_schedules.data.get(
-                'preconditioningEnabled', False)
-            precondition = 0 if not enabled else self.coordinator_schedules.data.get(
-                'preconditionLengthMins', None)
+                "preconditioningEnabled", False
+            )
+            precondition = (
+                0
+                if not enabled
+                else self.coordinator_schedules.data.get("preconditionLengthMins", None)
+            )
 
         self._state = precondition
 
@@ -169,12 +199,8 @@ class PriceCapNumber(OhmeEntity, NumberEntity):
         if self.coordinator.data is None:
             return None
 
-        penny_unit = {
-            "GBP": "p",
-            "EUR": "c"
-        }
-        currency = self.coordinator.data["userSettings"].get(
-            "currencyCode", "XXX")
+        penny_unit = {"GBP": "p", "EUR": "c"}
+        currency = self.coordinator.data["userSettings"].get("currencyCode", "XXX")
 
         return penny_unit.get(currency, f"{currency}/100")
 
@@ -183,7 +209,9 @@ class PriceCapNumber(OhmeEntity, NumberEntity):
         """Get value from data returned from API by coordinator"""
         if self.coordinator.data is not None:
             try:
-                self._state = self.coordinator.data["userSettings"]["chargeSettings"][0]["value"]
+                self._state = self.coordinator.data["userSettings"]["chargeSettings"][
+                    0
+                ]["value"]
             except:
                 self._state = None
         self.async_write_ha_state()

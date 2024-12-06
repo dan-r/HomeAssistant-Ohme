@@ -13,28 +13,27 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
-    async_add_entities
+    hass: HomeAssistant, config_entry: config_entries.ConfigEntry, async_add_entities
 ):
     """Setup switches."""
-    account_id = config_entry.data['email']
+    account_id = config_entry.data["email"]
 
     client = hass.data[DOMAIN][account_id][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][COORDINATOR_CHARGESESSIONS]
+    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][
+        COORDINATOR_CHARGESESSIONS
+    ]
 
     buttons = []
 
     if client.is_capable("pluginsRequireApprovalMode"):
-        buttons.append(
-            OhmeApproveChargeButton(coordinator, hass, client)
-        )
+        buttons.append(OhmeApproveChargeButton(coordinator, hass, client))
 
         async_add_entities(buttons, update_before_add=True)
 
 
 class OhmeApproveChargeButton(OhmeEntity, ButtonEntity):
     """Button for approving a charge."""
+
     _attr_translation_key = "approve_charge"
     _attr_icon = "mdi:check-decagram-outline"
 

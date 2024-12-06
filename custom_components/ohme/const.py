@@ -1,4 +1,5 @@
 """Component constants"""
+
 DOMAIN = "ohme"
 USER_AGENT = "dan-r-homeassistant-ohme"
 INTEGRATION_VERSION = "1.1.0"
@@ -30,5 +31,5 @@ LEGACY_MAPPING = {
     "buttonsLocked": "lock_buttons",
     "pluginsRequireApproval": "require_approval",
     "stealthEnabled": "sleep_when_inactive",
-    "price_cap_enabled": "enable_price_cap"
+    "price_cap_enabled": "enable_price_cap",
 }

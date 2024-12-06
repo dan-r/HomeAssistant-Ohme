@@ -5,25 +5,27 @@ import asyncio
 from homeassistant.core import callback, HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
 
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity
-)
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.util.dt import (utcnow)
+from homeassistant.util.dt import utcnow
 
-from .const import DOMAIN, DATA_CLIENT, DATA_COORDINATORS, COORDINATOR_CHARGESESSIONS, COORDINATOR_ACCOUNTINFO
+from .const import (
+    DOMAIN,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    COORDINATOR_CHARGESESSIONS,
+    COORDINATOR_ACCOUNTINFO,
+)
 from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
-    async_add_entities
+    hass: HomeAssistant, config_entry: config_entries.ConfigEntry, async_add_entities
 ):
     """Setup switches and configure coordinator."""
-    account_id = config_entry.data['email']
+    account_id = config_entry.data["email"]
 
     coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
 
@@ -31,33 +33,48 @@ async def async_setup_entry(
     accountinfo_coordinator = coordinators[COORDINATOR_ACCOUNTINFO]
     client = hass.data[DOMAIN][account_id][DATA_CLIENT]
 
-    switches = [OhmePauseChargeSwitch(coordinator, hass, client),
-                OhmeMaxChargeSwitch(coordinator, hass, client)
-                ]
+    switches = [
+        OhmePauseChargeSwitch(coordinator, hass, client),
+        OhmeMaxChargeSwitch(coordinator, hass, client),
+    ]
 
     if client.cap_available():
-        switches.append(
-            OhmePriceCapSwitch(accountinfo_coordinator, hass, client)
-        )
-    
+        switches.append(OhmePriceCapSwitch(accountinfo_coordinator, hass, client))
+
     if client.solar_capable():
-        switches.append(
-            OhmeSolarBoostSwitch(accountinfo_coordinator, hass, client)
-        )
+        switches.append(OhmeSolarBoostSwitch(accountinfo_coordinator, hass, client))
     if client.is_capable("buttonsLockable"):
         switches.append(
             OhmeConfigurationSwitch(
-                accountinfo_coordinator, hass, client, "lock_buttons", "lock", "buttonsLocked")
+                accountinfo_coordinator,
+                hass,
+                client,
+                "lock_buttons",
+                "lock",
+                "buttonsLocked",
+            )
         )
     if client.is_capable("pluginsRequireApprovalMode"):
         switches.append(
-            OhmeConfigurationSwitch(accountinfo_coordinator, hass, client,
-                                    "require_approval", "check-decagram", "pluginsRequireApproval")
+            OhmeConfigurationSwitch(
+                accountinfo_coordinator,
+                hass,
+                client,
+                "require_approval",
+                "check-decagram",
+                "pluginsRequireApproval",
+            )
         )
     if client.is_capable("stealth"):
         switches.append(
-            OhmeConfigurationSwitch(accountinfo_coordinator, hass, client,
-                                    "sleep_when_inactive", "power-sleep", "stealthEnabled")
+            OhmeConfigurationSwitch(
+                accountinfo_coordinator,
+                hass,
+                client,
+                "sleep_when_inactive",
+                "power-sleep",
+                "stealthEnabled",
+            )
         )
 
     async_add_entities(switches, update_before_add=True)
@@ -65,14 +82,15 @@ async def async_setup_entry(
 
 class OhmePauseChargeSwitch(OhmeEntity, SwitchEntity):
     """Switch for pausing a charge."""
+
     _attr_translation_key = "pause_charge"
     _attr_icon = "mdi:pause"
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Determine if charge is paused.
-           We handle this differently to the sensors as the state of this switch
-           is evaluated only when new data is fetched to stop the switch flicking back then forth."""
+        We handle this differently to the sensors as the state of this switch
+        is evaluated only when new data is fetched to stop the switch flicking back then forth."""
         if self.coordinator.data is None:
             self._attr_is_on = False
         else:
@@ -99,6 +117,7 @@ class OhmePauseChargeSwitch(OhmeEntity, SwitchEntity):
 
 class OhmeMaxChargeSwitch(OhmeEntity, SwitchEntity):
     """Switch for pausing a charge."""
+
     _attr_translation_key = "max_charge"
     _attr_icon = "mdi:battery-arrow-up"
 
@@ -108,8 +127,7 @@ class OhmeMaxChargeSwitch(OhmeEntity, SwitchEntity):
         if self.coordinator.data is None:
             self._attr_is_on = False
         else:
-            self._attr_is_on = bool(
-                self.coordinator.data["mode"] == "MAX_CHARGE")
+            self._attr_is_on = bool(self.coordinator.data["mode"] == "MAX_CHARGE")
 
         self._last_updated = utcnow()
 
@@ -126,7 +144,7 @@ class OhmeMaxChargeSwitch(OhmeEntity, SwitchEntity):
 
     async def async_turn_off(self):
         """Stop max charging.
-           We are not changing anything, just applying the last rule. No need to supply anything."""
+        We are not changing anything, just applying the last rule. No need to supply anything."""
         await self._client.async_max_charge(False)
 
         await asyncio.sleep(1)
@@ -136,7 +154,15 @@ class OhmeMaxChargeSwitch(OhmeEntity, SwitchEntity):
 class OhmeConfigurationSwitch(OhmeEntity, SwitchEntity):
     """Switch for changing configuration options."""
 
-    def __init__(self, coordinator, hass: HomeAssistant, client, translation_key, icon, config_key):
+    def __init__(
+        self,
+        coordinator,
+        hass: HomeAssistant,
+        client,
+        translation_key,
+        icon,
+        config_key,
+    ):
         self._attr_icon = f"mdi:{icon}"
         self._attr_translation_key = translation_key
         self._config_key = config_key
@@ -208,6 +234,7 @@ class OhmeSolarBoostSwitch(OhmeEntity, SwitchEntity):
 
 class OhmePriceCapSwitch(OhmeEntity, SwitchEntity):
     """Switch for enabling price cap."""
+
     _attr_translation_key = "enable_price_cap"
     _attr_icon = "mdi:car-speed-limiter"
 
@@ -218,7 +245,8 @@ class OhmePriceCapSwitch(OhmeEntity, SwitchEntity):
             self._attr_is_on = None
         else:
             self._attr_is_on = bool(
-                self.coordinator.data["userSettings"]["chargeSettings"][0]["enabled"])
+                self.coordinator.data["userSettings"]["chargeSettings"][0]["enabled"]
+            )
 
         self._last_updated = utcnow()
 

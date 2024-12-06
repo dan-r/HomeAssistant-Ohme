@@ -1,6 +1,7 @@
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.core import callback
 
+
 class OhmeEntity(Entity):
     """Base class for all Ohme entities."""
 
@@ -22,11 +23,9 @@ class OhmeEntity(Entity):
         """When entity is added to hass."""
         await super().async_added_to_hass()
         self.async_on_remove(
-            self.coordinator.async_add_listener(
-                self._handle_coordinator_update, None
-            )
+            self.coordinator.async_add_listener(self._handle_coordinator_update, None)
         )
-    
+
     @callback
     def _handle_coordinator_update(self) -> None:
         self.async_write_ha_state()

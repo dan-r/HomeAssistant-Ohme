@@ -31,7 +31,7 @@ async def async_setup_entry(
             PriceCapNumber(coordinators[COORDINATOR_ACCOUNTINFO], hass, client)
         )
 
-    async_add_entities(numbers, update_before_add=True)
+    await async_add_entities(numbers, update_before_add=True)
 
 
 class TargetPercentNumber(OhmeEntity, NumberEntity):

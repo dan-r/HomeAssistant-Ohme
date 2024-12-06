@@ -20,12 +20,11 @@ def next_slot(hass, account_id, data):
         if end is None and slot['end'] > datetime.now().astimezone():
             end = slot['end']
 
-        if start is None and slot['start'] > datetime.now().astimezone():
+        if start is None and slot['start'] > datetime.now().astimezone() and slot['start'] != end:
             start = slot['start']
-        elif collapse_slots and slot['start'] == end:
+        
+        if collapse_slots and slot['start'] == end:
             end = slot['end']
-        elif start is not None and end is not None:
-            break
 
     return {
         "start": start,

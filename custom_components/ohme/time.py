@@ -26,7 +26,7 @@ async def async_setup_entry(
     numbers = [TargetTime(coordinators[COORDINATOR_CHARGESESSIONS],
                           coordinators[COORDINATOR_SCHEDULES], hass, client)]
 
-    await async_add_entities(numbers, update_before_add=True)
+    async_add_entities(numbers, update_before_add=True)
 
 
 class TargetTime(OhmeEntity, TimeEntity):

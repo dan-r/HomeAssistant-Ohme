@@ -32,7 +32,7 @@ async def async_setup_entry(
                CurrentSlotBinarySensor(coordinator, hass, client),
                ChargerOnlineBinarySensor(coordinator_advanced, hass, client)]
 
-    await async_add_entities(sensors, update_before_add=True)
+    async_add_entities(sensors, update_before_add=True)
 
 
 class ConnectedBinarySensor(

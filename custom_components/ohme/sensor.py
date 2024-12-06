@@ -43,7 +43,7 @@ async def async_setup_entry(
                SlotListSensor(coordinator, hass, client),
                BatterySOCSensor(coordinator, hass, client)]
     
-    await async_add_entities(sensors, update_before_add=True)
+    async_add_entities(sensors, update_before_add=True)
 
 
 class PowerDrawSensor(OhmeEntity, SensorEntity):

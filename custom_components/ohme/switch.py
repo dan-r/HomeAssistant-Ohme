@@ -60,7 +60,7 @@ async def async_setup_entry(
                                     "sleep_when_inactive", "power-sleep", "stealthEnabled")
         )
 
-    await async_add_entities(switches, update_before_add=True)
+    async_add_entities(switches, update_before_add=True)
 
 
 class OhmePauseChargeSwitch(OhmeEntity, SwitchEntity):

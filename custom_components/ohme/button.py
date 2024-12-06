@@ -30,7 +30,7 @@ async def async_setup_entry(
             OhmeApproveChargeButton(coordinator, hass, client)
         )
 
-        await async_add_entities(buttons, update_before_add=True)
+        async_add_entities(buttons, update_before_add=True)
 
 
 class OhmeApproveChargeButton(OhmeEntity, ButtonEntity):

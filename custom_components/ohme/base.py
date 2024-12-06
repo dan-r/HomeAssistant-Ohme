@@ -1,4 +1,4 @@
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.core import callback
 
 class OhmeEntity(Entity):
@@ -16,7 +16,7 @@ class OhmeEntity(Entity):
         self._last_updated = None
         self._state = None
 
-        self._attr_device_info = client.get_device_info()
+        self._attr_device_info = DeviceInfo(**client.get_device_info())
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""

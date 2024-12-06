@@ -3,7 +3,7 @@ from homeassistant import core
 from homeassistant.helpers.entity_registry import RegistryEntry, async_migrate_entries
 from .const import *
 from .utils import get_option
-from .api_client import OhmeApiClient
+from ohme import OhmeApiClient
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator, OhmeAdvancedSettingsCoordinator, OhmeChargeSchedulesCoordinator
 from homeassistant.exceptions import ConfigEntryNotReady
 

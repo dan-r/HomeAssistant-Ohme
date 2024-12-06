@@ -1,7 +1,7 @@
 import voluptuous as vol
 from homeassistant.config_entries import (ConfigFlow, OptionsFlow)
 from .const import DOMAIN, CONFIG_VERSION, DEFAULT_INTERVAL_CHARGESESSIONS, DEFAULT_INTERVAL_ACCOUNTINFO, DEFAULT_INTERVAL_ADVANCED, DEFAULT_INTERVAL_SCHEDULES
-from .api_client import OhmeApiClient
+from ohme import OhmeApiClient
 
 
 USER_SCHEMA = vol.Schema({

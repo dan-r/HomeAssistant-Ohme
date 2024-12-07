@@ -1,6 +1,7 @@
-coverage==7.3.2
-pytest==7.4.3
-pytest-asyncio==0.21.0
-pytest-cov==4.1.0
-pytest-homeassistant-custom-component==0.13.85
+coverage==7.6.8
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+pytest-homeassistant-custom-component==0.13.191
+homeassistant
 ohme

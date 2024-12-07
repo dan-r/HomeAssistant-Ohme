@@ -1,25 +1,29 @@
 """Platform for binary_sensor."""
 
 from __future__ import annotations
+
 import logging
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.dt import utcnow
+
 from .const import (
-    DOMAIN,
+    COORDINATOR_ADVANCED,
+    COORDINATOR_CHARGESESSIONS,
+    DATA_CLIENT,
     DATA_COORDINATORS,
     DATA_SLOTS,
-    COORDINATOR_CHARGESESSIONS,
-    COORDINATOR_ADVANCED,
-    DATA_CLIENT,
+    DOMAIN,
 )
 from .coordinator import OhmeChargeSessionsCoordinator
+from .entity import OhmeEntity
 from .utils import in_slot
-from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,9 +31,9 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities,
-):
-    """Setup sensors and configure coordinator."""
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up sensors and configure coordinator."""
     account_id = config_entry.data["email"]
     client = hass.data[DOMAIN][account_id][DATA_CLIENT]
     coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][
@@ -78,7 +82,8 @@ class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
 
     def __init__(
         self, coordinator: OhmeChargeSessionsCoordinator, hass: HomeAssistant, client
-    ):
+    ) -> None:
+        """Initialise the sensor."""
         super().__init__(coordinator, hass, client)
 
         # Cache the last power readings
@@ -95,7 +100,10 @@ class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
         return self._state
 
     def _calculate_state(self) -> bool:
-        """Some trickery to get the charge state to update quickly."""
+        """Calculate state.
+
+        This uses power readings to update the state quicker than the API otherwise allows.
+        """
 
         power = self.coordinator.data["power"]["watt"]
 
@@ -120,7 +128,7 @@ class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
         # - Power has dropped by 40%+ since the last reading
         # - Last reading we were in a charge slot
         # - Now we are not in a charge slot
-        # The charge has JUST stopped on the session bounary but the power reading is lagging.
+        # The charge has JUST stopped on the session boundary but the power reading is lagging.
         # This condition makes sure we get the charge state updated on the tick immediately after charge stop.
         lr_power = self._last_reading["power"]["watt"]
         if (
@@ -146,7 +154,9 @@ class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
         trigger_state = wh_delta > 0 and power > 0
 
         _LOGGER.debug(
-            f"ChargingBinarySensor: Reading Wh delta of {wh_delta} and power of {power}w"
+            "ChargingBinarySensor: Reading Wh delta of %s and power of %sw",
+            wh_delta,
+            power,
         )
 
         # If state is going upwards, report straight away
@@ -182,7 +192,7 @@ class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Update data."""
 
-        # Don't accept updates if 5s hasnt passed
+        # Don't accept updates if 5s hasn't passed
         # State calculations use deltas that may be unreliable to check if requests are too often
         if self._last_updated and (
             utcnow().timestamp() - self._last_updated.timestamp() < 5
@@ -217,6 +227,7 @@ class PendingApprovalBinarySensor(OhmeEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
+        """Calculate state."""
         if self.coordinator.data is None:
             self._state = False
         else:
@@ -271,11 +282,11 @@ class ChargerOnlineBinarySensor(OhmeEntity, BinarySensorEntity):
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     @property
-    def is_on(self) -> bool:
+    def is_on(self):
         """Calculate state."""
 
         if self.coordinator.data and self.coordinator.data["online"]:
             return True
-        elif self.coordinator.data:
+        if self.coordinator.data:
             return False
         return None

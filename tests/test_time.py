@@ -1,16 +1,18 @@
 """Tests for time entity."""
 
-import pytest
 from datetime import time as dt_time
 from unittest.mock import AsyncMock, MagicMock, patch
-from custom_components.ohme.time import async_setup_entry, TargetTime
+
+import pytest
+
 from custom_components.ohme.const import (
-    DOMAIN,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
     COORDINATOR_CHARGESESSIONS,
     COORDINATOR_SCHEDULES,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    DOMAIN,
 )
+from custom_components.ohme.time import TargetTime, async_setup_entry
 
 
 @pytest.fixture
@@ -49,14 +51,16 @@ def mock_async_add_entities():
 
 
 @pytest.mark.asyncio
-async def test_async_setup_entry(mock_hass, mock_config_entry, mock_async_add_entities):
+async def test_async_setup_entry(
+    mock_hass, mock_config_entry, mock_async_add_entities
+) -> None:
     """Test async_setup_entry."""
     await async_setup_entry(mock_hass, mock_config_entry, mock_async_add_entities)
     assert mock_async_add_entities.called
 
 
 @pytest.fixture
-def target_time_entity(mock_hass):
+def target_time_entity(mock_hass) -> None:
     """Fixture for creating a target time entity."""
     coordinator = mock_hass.data[DOMAIN]["test@example.com"][DATA_COORDINATORS][
         COORDINATOR_CHARGESESSIONS
@@ -69,7 +73,7 @@ def target_time_entity(mock_hass):
 
 
 @pytest.mark.asyncio
-async def test_async_added_to_hass(target_time_entity):
+async def test_async_added_to_hass(target_time_entity) -> None:
     """Test async_added_to_hass."""
     with patch.object(
         target_time_entity.coordinator_schedules,
@@ -81,18 +85,22 @@ async def test_async_added_to_hass(target_time_entity):
 
 
 @pytest.mark.asyncio
-async def test_async_set_value(target_time_entity):
+async def test_async_set_value(target_time_entity) -> None:
     """Test async_set_value."""
-    with patch("custom_components.ohme.time.session_in_progress", return_value=True):
+    with patch(
+        "custom_components.ohme.time.session_in_progress", return_value=True
+    ):
         await target_time_entity.async_set_value(dt_time(12, 30))
         assert target_time_entity._client.async_apply_session_rule.called
 
-    with patch("custom_components.ohme.time.session_in_progress", return_value=False):
+    with patch(
+        "custom_components.ohme.time.session_in_progress", return_value=False
+    ):
         await target_time_entity.async_set_value(dt_time(12, 30))
         assert target_time_entity._client.async_update_schedule.called
 
 
-def test_native_value(target_time_entity):
+def test_native_value(target_time_entity) -> None:
     """Test native_value."""
     target_time_entity._state = dt_time(12, 30)
     assert target_time_entity.native_value == dt_time(12, 30)

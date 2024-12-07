@@ -1,17 +1,25 @@
 """UI configuration flow."""
 
+from typing import Any
+
+from ohme import OhmeApiClient
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, OptionsFlow
+
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+
 from .const import (
-    DOMAIN,
     CONFIG_VERSION,
-    DEFAULT_INTERVAL_CHARGESESSIONS,
     DEFAULT_INTERVAL_ACCOUNTINFO,
     DEFAULT_INTERVAL_ADVANCED,
+    DEFAULT_INTERVAL_CHARGESESSIONS,
     DEFAULT_INTERVAL_SCHEDULES,
+    DOMAIN,
 )
-from ohme import OhmeApiClient
-
 
 USER_SCHEMA = vol.Schema({vol.Required("email"): str, vol.Required("password"): str})
 
@@ -21,27 +29,32 @@ class OhmeConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = CONFIG_VERSION
 
-    async def async_step_user(self, info):
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """First config step."""
 
         errors = {}
 
-        if info is not None:
-            await self.async_set_unique_id(info["email"])
+        if user_input is not None:
+            await self.async_set_unique_id(user_input["email"])
             self._abort_if_unique_id_configured()
-            instance = OhmeApiClient(info["email"], info["password"])
+            instance = OhmeApiClient(user_input["email"], user_input["password"])
             if await instance.async_refresh_session() is None:
                 errors["base"] = "auth_error"
             else:
-                return self.async_create_entry(title=info["email"], data=info)
+                return self.async_create_entry(
+                    title=user_input["email"], data=user_input
+                )
 
         return self.async_show_form(
             step_id="user", data_schema=USER_SCHEMA, errors=errors
         )
 
-    def async_get_options_flow(self):
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry[Any]) -> OptionsFlow:
         """Return options flow."""
-        return OhmeOptionsFlow(self)
+        return OhmeOptionsFlow(config_entry)
 
 
 class OhmeOptionsFlow(OptionsFlow):
@@ -51,13 +64,13 @@ class OhmeOptionsFlow(OptionsFlow):
         """Initialize options flow and store config entry."""
         self._config_entry = entry
 
-    async def async_step_init(self, options):
+    async def async_step_init(self, options) -> ConfigFlowResult:
         """First step of options flow."""
 
         errors = {}
         # If form filled
         if options is not None:
-            data = self._config_entry.data
+            data: dict[str, Any] = dict(self._config_entry.data)
 
             # Update credentials
             if "email" in options and "password" in options:

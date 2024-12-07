@@ -1,13 +1,18 @@
 """Tests for buttons."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from custom_components.ohme.button import async_setup_entry, OhmeApproveChargeButton
+
+import pytest
+
+from custom_components.ohme.button import (
+    OhmeApproveChargeButton,
+    async_setup_entry,
+)
 from custom_components.ohme.const import (
-    DOMAIN,
+    COORDINATOR_CHARGESESSIONS,
     DATA_CLIENT,
     DATA_COORDINATORS,
-    COORDINATOR_CHARGESESSIONS,
+    DOMAIN,
 )
 
 
@@ -57,7 +62,7 @@ def setup_hass(mock_hass, mock_config_entry, mock_client, mock_coordinator):
 
 
 @pytest.mark.asyncio
-async def test_async_setup_entry(setup_hass, mock_config_entry):
+async def test_async_setup_entry(setup_hass, mock_config_entry) -> None:
     """Test async_setup_entry."""
     async_add_entities = AsyncMock()
     await async_setup_entry(setup_hass, mock_config_entry, async_add_entities)
@@ -65,7 +70,9 @@ async def test_async_setup_entry(setup_hass, mock_config_entry):
 
 
 @pytest.mark.asyncio
-async def test_ohme_approve_charge_button(setup_hass, mock_client, mock_coordinator):
+async def test_ohme_approve_charge_button(
+    setup_hass, mock_client, mock_coordinator
+) -> None:
     """Test OhmeApproveChargeButton."""
     button = OhmeApproveChargeButton(mock_coordinator, setup_hass, mock_client)
     await button.async_press()

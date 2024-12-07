@@ -1,21 +1,22 @@
 """Tests for number entities."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from custom_components.ohme.const import (
-    DOMAIN,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
     COORDINATOR_ACCOUNTINFO,
     COORDINATOR_CHARGESESSIONS,
     COORDINATOR_SCHEDULES,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    DOMAIN,
 )
-
 from custom_components.ohme.number import (
-    async_setup_entry,
-    TargetPercentNumber,
     PreconditioningNumber,
     PriceCapNumber,
+    TargetPercentNumber,
+    async_setup_entry,
 )
 
 
@@ -52,14 +53,16 @@ def mock_async_add_entities():
 
 
 @pytest.mark.asyncio
-async def test_async_setup_entry(mock_hass, mock_config_entry, mock_async_add_entities):
+async def test_async_setup_entry(
+    mock_hass, mock_config_entry, mock_async_add_entities
+) -> None:
     """Test async_setup_entry."""
     await async_setup_entry(mock_hass, mock_config_entry, mock_async_add_entities)
     assert mock_async_add_entities.call_count == 1
 
 
 @pytest.mark.asyncio
-async def test_target_percent_number(mock_hass):
+async def test_target_percent_number(mock_hass) -> None:
     """Test TargetPercentNumber."""
     coordinator = mock_hass.data[DOMAIN]["test@example.com"][DATA_COORDINATORS][
         COORDINATOR_CHARGESESSIONS
@@ -71,7 +74,9 @@ async def test_target_percent_number(mock_hass):
 
     number = TargetPercentNumber(coordinator, coordinator_schedules, mock_hass, client)
 
-    with patch("custom_components.ohme.number.session_in_progress", return_value=True):
+    with patch(
+        "custom_components.ohme.number.session_in_progress", return_value=True
+    ):
         await number.async_added_to_hass()
         await number.async_set_native_value(50)
 
@@ -79,7 +84,7 @@ async def test_target_percent_number(mock_hass):
 
 
 @pytest.mark.asyncio
-async def test_preconditioning_number(mock_hass):
+async def test_preconditioning_number(mock_hass) -> None:
     """Test PreconditioningNumber."""
     coordinator = mock_hass.data[DOMAIN]["test@example.com"][DATA_COORDINATORS][
         COORDINATOR_CHARGESESSIONS
@@ -93,7 +98,9 @@ async def test_preconditioning_number(mock_hass):
         coordinator, coordinator_schedules, mock_hass, client
     )
 
-    with patch("custom_components.ohme.number.session_in_progress", return_value=True):
+    with patch(
+        "custom_components.ohme.number.session_in_progress", return_value=True
+    ):
         await number.async_added_to_hass()
         await number.async_set_native_value(30)
 
@@ -101,7 +108,7 @@ async def test_preconditioning_number(mock_hass):
 
 
 @pytest.mark.asyncio
-async def test_price_cap_number(mock_hass):
+async def test_price_cap_number(mock_hass) -> None:
     """Test PriceCapNumber."""
     coordinator = mock_hass.data[DOMAIN]["test@example.com"][DATA_COORDINATORS][
         COORDINATOR_ACCOUNTINFO

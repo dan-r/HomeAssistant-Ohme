@@ -1,28 +1,33 @@
 """Platform for number."""
 
 from __future__ import annotations
+
 import asyncio
-from homeassistant.components.number import NumberEntity, NumberDeviceClass
-from homeassistant.components.number.const import NumberMode, PERCENTAGE
+
+from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTime
-from homeassistant.core import callback, HomeAssistant
+from homeassistant.const import PERCENTAGE, UnitOfTime
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from .const import (
-    DOMAIN,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
     COORDINATOR_ACCOUNTINFO,
     COORDINATOR_CHARGESESSIONS,
     COORDINATOR_SCHEDULES,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    DOMAIN,
 )
+from .entity import OhmeEntity
 from .utils import session_in_progress
-from .base import OhmeEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
-):
-    """Setup switches and configure coordinator."""
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up switches and configure coordinator."""
     account_id = config_entry.data["email"]
 
     coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
@@ -60,7 +65,9 @@ class TargetPercentNumber(OhmeEntity, NumberEntity):
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_suggested_display_precision = 0
 
-    def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
+    def __init__(
+        self, coordinator, coordinator_schedules, hass: HomeAssistant, client
+    ) -> None:
         """Initialise the entity and set up a second coordinator."""
         super().__init__(coordinator, hass, client)
         self.coordinator_schedules = coordinator_schedules
@@ -114,7 +121,9 @@ class PreconditioningNumber(OhmeEntity, NumberEntity):
     _attr_native_step = 5
     _attr_native_max_value = 60
 
-    def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
+    def __init__(
+        self, coordinator, coordinator_schedules, hass: HomeAssistant, client
+    ) -> None:
         """Initialise the entity and set up a second coordinator."""
         super().__init__(coordinator, hass, client)
         self.coordinator_schedules = coordinator_schedules
@@ -185,6 +194,8 @@ class PreconditioningNumber(OhmeEntity, NumberEntity):
 
 
 class PriceCapNumber(OhmeEntity, NumberEntity):
+    """Price cap sensor."""
+
     _attr_translation_key = "price_cap"
     _attr_icon = "mdi:cash"
     _attr_device_class = NumberDeviceClass.MONETARY
@@ -202,6 +213,7 @@ class PriceCapNumber(OhmeEntity, NumberEntity):
 
     @property
     def native_unit_of_measurement(self):
+        """Return the unit of measurement."""
         if self.coordinator.data is None:
             return None
 

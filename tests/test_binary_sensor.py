@@ -1,23 +1,24 @@
 """Tests for binary sensors."""
 
-import pytest
 from unittest.mock import MagicMock
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from custom_components.ohme.const import (
-    DOMAIN,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
-    COORDINATOR_CHARGESESSIONS,
-    COORDINATOR_ADVANCED,
-)
+
+import pytest
 
 from custom_components.ohme.binary_sensor import (
-    ConnectedBinarySensor,
-    ChargingBinarySensor,
-    PendingApprovalBinarySensor,
     ChargerOnlineBinarySensor,
+    ChargingBinarySensor,
+    ConnectedBinarySensor,
+    PendingApprovalBinarySensor,
 )
+from custom_components.ohme.const import (
+    COORDINATOR_ADVANCED,
+    COORDINATOR_CHARGESESSIONS,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    DOMAIN,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 
 @pytest.fixture
@@ -52,7 +53,7 @@ def mock_client():
     return mock
 
 
-def test_connected_binary_sensor(mock_hass, mock_coordinator, mock_client):
+def test_connected_binary_sensor(mock_hass, mock_coordinator, mock_client) -> None:
     """Test ConnectedBinarySensor."""
     sensor = ConnectedBinarySensor(mock_coordinator, mock_hass, mock_client)
     mock_coordinator.data = {"mode": "CONNECTED"}
@@ -62,7 +63,7 @@ def test_connected_binary_sensor(mock_hass, mock_coordinator, mock_client):
     assert sensor.is_on is False
 
 
-def test_charging_binary_sensor(mock_hass, mock_coordinator, mock_client):
+def test_charging_binary_sensor(mock_hass, mock_coordinator, mock_client) -> None:
     """Test ChargingBinarySensor."""
     sensor = ChargingBinarySensor(mock_coordinator, mock_hass, mock_client)
     mock_coordinator.data = {
@@ -75,7 +76,9 @@ def test_charging_binary_sensor(mock_hass, mock_coordinator, mock_client):
     assert sensor._calculate_state() is True
 
 
-def test_pending_approval_binary_sensor(mock_hass, mock_coordinator, mock_client):
+def test_pending_approval_binary_sensor(
+    mock_hass, mock_coordinator, mock_client
+) -> None:
     """Test PendingApprovalBinarySensor."""
     sensor = PendingApprovalBinarySensor(mock_coordinator, mock_hass, mock_client)
     mock_coordinator.data = {"mode": "PENDING_APPROVAL"}
@@ -85,7 +88,7 @@ def test_pending_approval_binary_sensor(mock_hass, mock_coordinator, mock_client
     assert sensor.is_on is False
 
 
-def test_charger_online_binary_sensor(mock_hass, mock_coordinator, mock_client):
+def test_charger_online_binary_sensor(mock_hass, mock_coordinator, mock_client) -> None:
     """Test ChargerOnlineBinarySensor."""
     sensor = ChargerOnlineBinarySensor(mock_coordinator, mock_hass, mock_client)
     mock_coordinator.data = {"online": True}

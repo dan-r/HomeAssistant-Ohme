@@ -1,32 +1,31 @@
 """The ohme integration."""
 
 import logging
+
+from ohme import OhmeApiClient
+
 from homeassistant import core
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity_registry import RegistryEntry, async_migrate_entries
+
 from .const import (
-    DOMAIN,
     CONFIG_VERSION,
-    ENTITY_TYPES,
     DATA_CLIENT,
     DATA_COORDINATORS,
     DATA_OPTIONS,
+    DOMAIN,
+    ENTITY_TYPES,
     LEGACY_MAPPING,
 )
-from ohme import OhmeApiClient
 from .coordinator import (
-    OhmeChargeSessionsCoordinator,
     OhmeAccountInfoCoordinator,
     OhmeAdvancedSettingsCoordinator,
     OhmeChargeSchedulesCoordinator,
+    OhmeChargeSessionsCoordinator,
 )
-from homeassistant.exceptions import ConfigEntryNotReady
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
-    """Set up the Ohme EV Charger component."""
-    return True
 
 
 async def async_setup_dependencies(hass, entry):
@@ -50,7 +49,7 @@ async def async_update_listener(hass, entry):
 
 
 async def async_setup_entry(hass, entry):
-    """Called from the config flow."""
+    """Set up Ohme from a config entry."""
 
     def _update_unique_id(entry: RegistryEntry) -> dict[str, str] | None:
         """Update unique IDs from old format."""
@@ -105,7 +104,7 @@ async def async_setup_entry(hass, entry):
 
             if allow_failure:
                 _LOGGER.error(
-                    "%s failed to setup. This coordinator is optional so the integration will still function, but please raise an issue if this persists.",
+                    "%s failed to setup. This coordinator is optional so the integration will still function, but please raise an issue if this persists",
                     coordinator.__class__.__name__,
                 )
             else:
@@ -127,13 +126,13 @@ async def async_unload_entry(hass, entry):
     return await hass.config_entries.async_unload_platforms(entry, ENTITY_TYPES)
 
 
-async def async_migrate_entry(hass: core.HomeAssistant, config_entry) -> bool:
+async def async_migrate_entry(
+    hass: core.HomeAssistant, config_entry: ConfigEntry
+) -> bool:
     """Migrate old entry."""
     # Version number has gone backwards
-    if CONFIG_VERSION < config_entry.version:
-        _LOGGER.error(
-            "Backwards migration not possible. Please update the integration."
-        )
+    if config_entry.version > CONFIG_VERSION:
+        _LOGGER.error("Backwards migration not possible. Please update the integration")
         return False
 
     # Version number has gone up

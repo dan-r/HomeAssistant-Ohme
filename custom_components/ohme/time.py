@@ -1,29 +1,35 @@
 """Platform for time integration."""
 
 from __future__ import annotations
+
 import asyncio
+from datetime import time as dt_time
 import logging
+
 from homeassistant.components.time import TimeEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import callback, HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from .const import (
-    DOMAIN,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
     COORDINATOR_CHARGESESSIONS,
     COORDINATOR_SCHEDULES,
+    DATA_CLIENT,
+    DATA_COORDINATORS,
+    DOMAIN,
 )
+from .entity import OhmeEntity
 from .utils import session_in_progress
-from datetime import time as dt_time
-from .base import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
-):
-    """Setup switches and configure coordinator."""
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up switches and configure coordinator."""
     account_id = config_entry.data["email"]
 
     coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
@@ -48,7 +54,9 @@ class TargetTime(OhmeEntity, TimeEntity):
     _attr_id = "target_time"
     _attr_icon = "mdi:alarm-check"
 
-    def __init__(self, coordinator, coordinator_schedules, hass: HomeAssistant, client):
+    def __init__(
+        self, coordinator, coordinator_schedules, hass: HomeAssistant, client
+    ) -> None:
         """Initialise target time sensor."""
         super().__init__(coordinator, hass, client)
 

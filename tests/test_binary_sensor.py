@@ -72,8 +72,7 @@ def test_charging_binary_sensor(mock_hass, mock_coordinator, mock_client) -> Non
         "mode": "CONNECTED",
         "allSessionSlots": [],
     }
-    sensor._last_reading = {"power": {"watt": 100}, "batterySoc": {"wh": 40}}
-    assert sensor._calculate_state() is True
+    assert sensor.is_on is True
 
 
 def test_pending_approval_binary_sensor(

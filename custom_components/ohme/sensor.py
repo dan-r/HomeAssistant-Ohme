@@ -132,7 +132,6 @@ class EnergyUsageSensor(OhmeEntity, SensorEntity):
 
     _attr_translation_key = "energy"
     _attr_icon = "mdi:lightning-bolt-circle"
-    _attr_has_entity_name = True
     _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
     _attr_suggested_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 1

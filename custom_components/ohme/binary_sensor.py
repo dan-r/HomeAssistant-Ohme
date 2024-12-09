@@ -16,9 +16,6 @@ from homeassistant.util.dt import utcnow
 from .const import (
     COORDINATOR_ADVANCED,
     COORDINATOR_CHARGESESSIONS,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
-    DATA_SLOTS,
     DOMAIN,
 )
 from .coordinator import OhmeChargeSessionsCoordinator
@@ -35,11 +32,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensors and configure coordinator."""
     account_id = config_entry.data["email"]
-    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][
+    client = config_entry.runtime_data.client
+
+    coordinator = config_entry.runtime_data.coordinators[
         COORDINATOR_CHARGESESSIONS
     ]
-    coordinator_advanced = hass.data[DOMAIN][account_id][DATA_COORDINATORS][
+    coordinator_advanced = config_entry.runtime_data.coordinators[
         COORDINATOR_ADVANCED
     ]
 
@@ -106,7 +104,7 @@ class CurrentSlotBinarySensor(OhmeEntity, BinarySensorEntity):
     def extra_state_attributes(self):
         """Attributes of the sensor."""
         now = utcnow()
-        slots = self._hass.data[DOMAIN][self._client.email].get(DATA_SLOTS, [])
+        slots = self.platform.config_entry.runtime_data.slots
 
         return {
             "planned_dispatches": [x for x in slots if not x["end"] or x["end"] > now],

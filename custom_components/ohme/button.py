@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import COORDINATOR_CHARGESESSIONS, DATA_CLIENT, DATA_COORDINATORS, DOMAIN
+from .const import COORDINATOR_CHARGESESSIONS, DOMAIN
 from .entity import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,8 +24,8 @@ async def async_setup_entry(
     """Set up switches."""
     account_id = config_entry.data["email"]
 
-    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
-    coordinator = hass.data[DOMAIN][account_id][DATA_COORDINATORS][
+    client = config_entry.runtime_data.client
+    coordinator = config_entry.runtime_data.coordinators[
         COORDINATOR_CHARGESESSIONS
     ]
 

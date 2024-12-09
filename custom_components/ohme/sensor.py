@@ -25,9 +25,6 @@ from homeassistant.util.dt import utcnow
 from .const import (
     COORDINATOR_ADVANCED,
     COORDINATOR_CHARGESESSIONS,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
-    DATA_SLOTS,
     DOMAIN,
 )
 from .entity import OhmeEntity
@@ -44,8 +41,8 @@ async def async_setup_entry(
     """Set up sensors and configure coordinator."""
     account_id = config_entry.data["email"]
 
-    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
-    coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
+    client = config_entry.runtime_data.client
+    coordinators = config_entry.runtime_data.coordinators
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     adv_coordinator = coordinators[COORDINATOR_ADVANCED]
@@ -199,7 +196,7 @@ class NextSlotStartSensor(OhmeEntity, SensorEntity):
             self._state = None
         else:
             self._state = next_slot(
-                self._hass, self._client.email, self.coordinator.data
+                self.platform.config_entry, self.coordinator.data
             )["start"]
 
         self._last_updated = utcnow()
@@ -229,7 +226,7 @@ class NextSlotEndSensor(OhmeEntity, SensorEntity):
             self._state = None
         else:
             self._state = next_slot(
-                self._hass, self._client.email, self.coordinator.data
+                self.platform.config_entry, self.coordinator.data
             )["end"]
 
         self._last_updated = utcnow()
@@ -261,10 +258,10 @@ class SlotListSensor(OhmeEntity, SensorEntity):
             slots = slot_list(self.coordinator.data)
 
             # Store slots for external use
-            self._hass.data[DOMAIN][self._client.email][DATA_SLOTS] = slots
+            self.platform.config_entry.runtime_data.slots = slots
 
             # Convert list to text
-            self._state = slot_list_str(self._hass, self._client.email, slots)
+            self._state = slot_list_str(self.platform.config_entry, slots)
 
         self._last_updated = utcnow()
         self.async_write_ha_state()

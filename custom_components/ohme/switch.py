@@ -14,8 +14,6 @@ from homeassistant.util.dt import utcnow
 from .const import (
     COORDINATOR_ACCOUNTINFO,
     COORDINATOR_CHARGESESSIONS,
-    DATA_CLIENT,
-    DATA_COORDINATORS,
     DOMAIN,
 )
 from .entity import OhmeEntity
@@ -31,11 +29,11 @@ async def async_setup_entry(
     """Set up switches and configure coordinator."""
     account_id = config_entry.data["email"]
 
-    coordinators = hass.data[DOMAIN][account_id][DATA_COORDINATORS]
+    coordinators = config_entry.runtime_data.coordinators
 
     coordinator = coordinators[COORDINATOR_CHARGESESSIONS]
     accountinfo_coordinator = coordinators[COORDINATOR_ACCOUNTINFO]
-    client = hass.data[DOMAIN][account_id][DATA_CLIENT]
+    client = config_entry.runtime_data.client
 
     switches = [
         OhmePauseChargeSwitch(coordinator, hass, client),

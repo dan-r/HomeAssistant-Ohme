@@ -4,8 +4,6 @@ DOMAIN = "ohme"
 CONFIG_VERSION = 1
 ENTITY_TYPES = ["sensor", "binary_sensor", "switch", "button", "number", "time"]
 
-DATA_OPTIONS = "options"
-
 COORDINATOR_CHARGESESSIONS = 0
 COORDINATOR_ACCOUNTINFO = 1
 COORDINATOR_ADVANCED = 2

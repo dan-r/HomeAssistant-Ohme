@@ -14,7 +14,6 @@ from .const import (
     COORDINATOR_ACCOUNTINFO,
     COORDINATOR_CHARGESESSIONS,
     COORDINATOR_SCHEDULES,
-    DOMAIN,
 )
 from .entity import OhmeEntity
 from .utils import session_in_progress
@@ -26,7 +25,6 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up switches and configure coordinator."""
-    account_id = config_entry.data["email"]
 
     coordinators = config_entry.runtime_data.coordinators
     client = config_entry.runtime_data.client

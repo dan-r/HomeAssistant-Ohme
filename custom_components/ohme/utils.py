@@ -4,8 +4,6 @@ import datetime
 from functools import reduce
 from zoneinfo import ZoneInfo
 
-from .const import DATA_OPTIONS, DOMAIN
-
 
 def next_slot(config_entry, data):
     """Get the next charge slot start/end times."""

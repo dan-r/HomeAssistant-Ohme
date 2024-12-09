@@ -11,11 +11,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.dt import utcnow
 
-from .const import (
-    COORDINATOR_ACCOUNTINFO,
-    COORDINATOR_CHARGESESSIONS,
-    DOMAIN,
-)
+from .const import COORDINATOR_ACCOUNTINFO, COORDINATOR_CHARGESESSIONS
 from .entity import OhmeEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,7 +23,6 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up switches and configure coordinator."""
-    account_id = config_entry.data["email"]
 
     coordinators = config_entry.runtime_data.coordinators
 

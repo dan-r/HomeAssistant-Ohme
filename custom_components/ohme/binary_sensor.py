@@ -13,12 +13,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.dt import utcnow
 
-from .const import (
-    COORDINATOR_ADVANCED,
-    COORDINATOR_CHARGESESSIONS,
-    DOMAIN,
-)
-from .coordinator import OhmeChargeSessionsCoordinator
+from .const import COORDINATOR_ADVANCED, COORDINATOR_CHARGESESSIONS
 from .entity import OhmeEntity
 from .utils import in_slot
 
@@ -31,15 +26,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensors and configure coordinator."""
-    account_id = config_entry.data["email"]
     client = config_entry.runtime_data.client
 
-    coordinator = config_entry.runtime_data.coordinators[
-        COORDINATOR_CHARGESESSIONS
-    ]
-    coordinator_advanced = config_entry.runtime_data.coordinators[
-        COORDINATOR_ADVANCED
-    ]
+    coordinator = config_entry.runtime_data.coordinators[COORDINATOR_CHARGESESSIONS]
+    coordinator_advanced = config_entry.runtime_data.coordinators[COORDINATOR_ADVANCED]
 
     sensors = [
         ConnectedBinarySensor(coordinator, hass, client),
@@ -63,7 +53,9 @@ class ConnectedBinarySensor(OhmeEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Calculate state."""
 
-        return bool(self.coordinator.data and self.coordinator.data["mode"] != "DISCONNECTED")
+        return bool(
+            self.coordinator.data and self.coordinator.data["mode"] != "DISCONNECTED"
+        )
 
 
 class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
@@ -77,7 +69,9 @@ class ChargingBinarySensor(OhmeEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return state."""
 
-        return bool(self.coordinator.data and self.coordinator.data["power"]["watt"] > 0)
+        return bool(
+            self.coordinator.data and self.coordinator.data["power"]["watt"] > 0
+        )
 
 
 class PendingApprovalBinarySensor(OhmeEntity, BinarySensorEntity):
@@ -90,8 +84,10 @@ class PendingApprovalBinarySensor(OhmeEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Calculate state."""
 
-        return bool(self.coordinator.data and self.coordinator.data["mode"] == "PENDING_APPROVAL")
-
+        return bool(
+            self.coordinator.data
+            and self.coordinator.data["mode"] == "PENDING_APPROVAL"
+        )
 
 
 class CurrentSlotBinarySensor(OhmeEntity, BinarySensorEntity):

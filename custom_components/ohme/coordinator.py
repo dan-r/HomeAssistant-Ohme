@@ -12,7 +12,6 @@ from .const import (
     DEFAULT_INTERVAL_ADVANCED,
     DEFAULT_INTERVAL_CHARGESESSIONS,
     DEFAULT_INTERVAL_SCHEDULES,
-    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,7 +27,9 @@ class OhmeChargeSessionsCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name="Ohme Charge Sessions",
             update_interval=timedelta(
-                minutes=config_entry.options.get("interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS)
+                minutes=config_entry.options.get(
+                    "interval_chargesessions", DEFAULT_INTERVAL_CHARGESESSIONS
+                )
             ),
         )
         self._client = config_entry.runtime_data.client
@@ -52,7 +53,9 @@ class OhmeAccountInfoCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name="Ohme Account Info",
             update_interval=timedelta(
-                minutes=config_entry.options.get("interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO)
+                minutes=config_entry.options.get(
+                    "interval_accountinfo", DEFAULT_INTERVAL_ACCOUNTINFO
+                )
             ),
         )
         self._client = config_entry.runtime_data.client
@@ -76,7 +79,9 @@ class OhmeAdvancedSettingsCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name="Ohme Advanced Settings",
             update_interval=timedelta(
-                minutes=config_entry.options.get("interval_advanced", DEFAULT_INTERVAL_ADVANCED)
+                minutes=config_entry.options.get(
+                    "interval_advanced", DEFAULT_INTERVAL_ADVANCED
+                )
             ),
         )
         self._client = config_entry.runtime_data.client
@@ -100,7 +105,9 @@ class OhmeChargeSchedulesCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name="Ohme Charge Schedules",
             update_interval=timedelta(
-                minutes=config_entry.options.get("interval_schedules", DEFAULT_INTERVAL_SCHEDULES)
+                minutes=config_entry.options.get(
+                    "interval_schedules", DEFAULT_INTERVAL_SCHEDULES
+                )
             ),
         )
         self._client = config_entry.runtime_data.client

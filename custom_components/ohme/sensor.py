@@ -22,11 +22,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.dt import utcnow
 
-from .const import (
-    COORDINATOR_ADVANCED,
-    COORDINATOR_CHARGESESSIONS,
-    DOMAIN,
-)
+from .const import COORDINATOR_ADVANCED, COORDINATOR_CHARGESESSIONS
 from .entity import OhmeEntity
 from .utils import next_slot, slot_list, slot_list_str
 
@@ -39,7 +35,6 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensors and configure coordinator."""
-    account_id = config_entry.data["email"]
 
     client = config_entry.runtime_data.client
     coordinators = config_entry.runtime_data.coordinators
@@ -195,9 +190,9 @@ class NextSlotStartSensor(OhmeEntity, SensorEntity):
         ):
             self._state = None
         else:
-            self._state = next_slot(
-                self.platform.config_entry, self.coordinator.data
-            )["start"]
+            self._state = next_slot(self.platform.config_entry, self.coordinator.data)[
+                "start"
+            ]
 
         self._last_updated = utcnow()
 
@@ -225,9 +220,9 @@ class NextSlotEndSensor(OhmeEntity, SensorEntity):
         ):
             self._state = None
         else:
-            self._state = next_slot(
-                self.platform.config_entry, self.coordinator.data
-            )["end"]
+            self._state = next_slot(self.platform.config_entry, self.coordinator.data)[
+                "end"
+            ]
 
         self._last_updated = utcnow()
 

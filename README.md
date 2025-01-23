@@ -6,6 +6,8 @@ The core version of the integration is effectively a ground-up rewrite to follow
 
 For the core version of the integration, please raise any issues and pull requests in the [Home Assistant Core](https://github.com/home-assistant/core) repository. The API library is seperate from Home Assistant and can be found in the [ohmepy](https://github.com/dan-r/ohmepy) repository.
 
+Thank you to the community that has formed around this integration, and I hope you can appreciate this important and necessary evolution of the integration.
+
 <br></br>
 
 # Ohme EV Charger for Home Assistant

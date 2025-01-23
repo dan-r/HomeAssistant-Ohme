@@ -1,3 +1,13 @@
+
+## Important Note
+As of Home Assistant 2025.1, there is now an Ohme integration built into the Home Assistant Core. This means you no longer need to install this integration and can simply add your Ohme account through the Home Assistant UI. As a result, this integration is no longer being actively maintained.
+
+The core version of the integration is effectively a ground-up rewrite to follow all the Home Assistant conventions and generally try to maintain a better quality user experience. Because of the amount of work this involves, there is currently a feature gap between custom and core versions, but I'm working to shrink this and am contributing new features to the core gradually. Some things are done differently in the core version (such as different sensor names and having a few of the binary sensors collapsed into an enum sensor), so moving to it may be disruptive if you have working automations.
+
+For the core version of the integration, please raise any issues and pull requests in the [Home Assistant Core](https://github.com/home-assistant/core) repository. The API library is seperate from Home Assistant and can be found in the [ohmepy](https://github.com/dan-r/ohmepy) repository.
+
+<br></br>
+
 # Ohme EV Charger for Home Assistant
 
 An unofficial integration for interacting with Ohme EV Chargers. I have no affiliation with Ohme besides owning one of their EV chargers.

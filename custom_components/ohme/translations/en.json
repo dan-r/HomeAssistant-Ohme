@@ -42,7 +42,12 @@
     },
     "abort": {}
   },
-  "issues": {},
+  "issues": {
+    "ohme_core_integration": {
+      "title": "Ohme Integration Available in Home Assistant Core",
+      "description": "The Ohme integration now exists in Home Assistant Core from 2025.1.0 onwards. Click Learn More to find more about the changes and how to migrate."
+    }
+  },
   "entity": {
     "binary_sensor": {
       "car_connected": {

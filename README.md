@@ -4,9 +4,17 @@ As of Home Assistant 2025.1, there is now an [Ohme integration](https://www.home
 
 The core version of the integration is effectively a ground-up rewrite to follow all the Home Assistant conventions and generally try to maintain a better quality user experience. Because of the amount of work this involves, there is currently a feature gap between custom and core versions, but I'm working to shrink this and am contributing new features to the core gradually. Some things are done differently in the core version (such as different sensor names and having a few of the binary sensors collapsed into an enum sensor), so moving to it may be disruptive if you have working automations.
 
-For the core version of the integration, please raise any issues and pull requests in the [Home Assistant Core](https://github.com/home-assistant/core) repository. The API library is seperate from Home Assistant and can be found in the [ohmepy](https://github.com/dan-r/ohmepy) repository.
+For the core version of the integration, please raise any issues and pull requests in the [Home Assistant Core](https://github.com/home-assistant/core) repository. The API library is separate from Home Assistant and can be found in the [ohmepy](https://github.com/dan-r/ohmepy) repository.
 
 Thank you to the community that has formed around this integration, and I hope you can appreciate this important and necessary evolution of the integration.
+
+### Migrating
+To migrate from the custom component to the core integration:
+1. Ensure you are running an up to date version of Home Assistant
+2. Delete your Ohme account from the Home Assistant Devices & services page
+3. Uninstall the custom component. If you installed through HACS, you can do this through the UI
+4. Restart Home Assistant
+5. Configure the core Ohme integration
 
 <br></br>
 

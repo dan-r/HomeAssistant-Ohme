@@ -6,6 +6,7 @@ from .utils import get_option
 from .api_client import OhmeApiClient
 from .coordinator import OhmeChargeSessionsCoordinator, OhmeAccountInfoCoordinator, OhmeAdvancedSettingsCoordinator, OhmeChargeSchedulesCoordinator
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers.issue_registry import async_create_issue
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -93,8 +94,18 @@ async def async_setup_entry(hass, entry):
     # Setup entities
     await hass.config_entries.async_forward_entry_setups(entry, ENTITY_TYPES)
 
-    entry.async_on_unload(entry.add_update_listener(async_update_listener))
-
+    # Add Core integration message
+    async_create_issue(
+        hass,
+        DOMAIN,
+        "ohme_core_integration",
+        is_fixable=False,
+        severity="warning",
+        translation_key="ohme_core_integration",
+        is_persistent=True,
+        learn_more_url="https://github.com/dan-r/HomeAssistant-ohme?tab=readme-ov-file#important-note"
+    )
+    
     return True
 
 

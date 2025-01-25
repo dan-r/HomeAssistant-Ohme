@@ -9,7 +9,7 @@ For the core version of the integration, please raise any issues and pull reques
 Thank you to the community that has formed around this integration, and I hope you can appreciate this important and necessary evolution of the integration.
 
 ### Migrating
-To migrate from the custom component to the core version:
+To migrate from the custom component to the core integration:
 1. Ensure you are running an up to date version of Home Assistant
 2. Delete your Ohme account from the Home Assistant Devices & services page
 3. Uninstall the custom component. If you installed through HACS, you can do this through the UI

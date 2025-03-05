@@ -1,12 +1,14 @@
 
 ## Important Note
-As of Home Assistant 2025.1, there is now an [Ohme integration](https://www.home-assistant.io/integrations/ohme/) built into the Home Assistant Core. This means you no longer need to install this integration and can simply add your Ohme account through the Home Assistant UI. As a result, this integration is no longer being actively maintained.
+**This integration is no longer being actively maintained and will not receive any further updates.**
 
-The core version of the integration is effectively a ground-up rewrite to follow all the Home Assistant conventions and generally try to maintain a better quality user experience. Because of the amount of work this involves, there is currently a feature gap between custom and core versions, but I'm working to shrink this and am contributing new features to the core gradually. Some things are done differently in the core version (such as different sensor names and having a few of the binary sensors collapsed into an enum sensor), so moving to it may be disruptive if you have working automations.
+As of Home Assistant 2025.1, the [Ohme integration](https://www.home-assistant.io/integrations/ohme/) is now built into the Home Assistant Core. This means you no longer need to install this custom integration and can simply add your Ohme account through the Home Assistant UI.
+
+The core version of the integration is effectively a ground-up rewrite to follow all the Home Assistant conventions and generally aims to maintain a better quality user experience. While it is now feature complete, moving to the core version may be disruptive if you have working automations due to different entity names and formats.
 
 For the core version of the integration, please raise any issues and pull requests in the [Home Assistant Core](https://github.com/home-assistant/core) repository. The API library is separate from Home Assistant and can be found in the [ohmepy](https://github.com/dan-r/ohmepy) repository.
 
-Thank you to the community that has formed around this integration, and I hope you can appreciate this important and necessary evolution of the integration.
+Thank you to the community that has formed around this integration. I hope to see you over at the Home Assistant Core repo!
 
 ### Migrating
 To migrate from the custom component to the core integration:
